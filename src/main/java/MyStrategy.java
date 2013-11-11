@@ -4,10 +4,11 @@ import java.util.Random;
 
 public final class MyStrategy implements Strategy {
 	private final Random random = new Random();
-
+	static Bonus  moveToBonus = null;
 	@Override
 	public void move(Trooper self, World world, Game game, Move move) {
 		if (self.getActionPoints() < 1) {// game.getStandingMoveCost()) {
+			 moveToBonus = null;
 			return;
 		}
 		Trooper[] trooreps = world.getTroopers();
@@ -16,24 +17,27 @@ public final class MyStrategy implements Strategy {
 
 		boolean haveVisibleenemys = false;
 
-		Bonus moveToBonus = null;
+		
 		System.out.println("-=Why I am = " + self.getType()+" X="+self.getX()+" Y="+self.getY() + " : "
 				+ self.getActionPoints());
+		if( moveToBonus == null) 
 		for (int i = 0; i < bonuses.length; i++) {
 			// if (players[pid].getId()==trooreps[i].getPlayerId())
-
+			Bonus  foundBonus = null;
 			// System.out.println(bonuses[i].getType());
 			if (bonuses[i].getType() == bonuses[i].getType().FIELD_RATION
 					&& !self.isHoldingFieldRation()) {
-				moveToBonus = bonuses[i];
+				foundBonus = bonuses[i];
 			} else if (bonuses[i].getType() == bonuses[i].getType().GRENADE
 					&& !self.isHoldingGrenade()) {
-				moveToBonus = bonuses[i];
+				foundBonus = bonuses[i];
 			} else if (bonuses[i].getType() == bonuses[i].getType().MEDIKIT
 					&& !self.isHoldingMedikit()) {
-				moveToBonus = bonuses[i];
+				foundBonus = bonuses[i];
 			}
-
+            if(foundBonus!=null && moveToBonus == null) moveToBonus= foundBonus;
+            else if(foundBonus==null) ;
+            else if(self.getDistanceTo(moveToBonus)>self.getDistanceTo(foundBonus)) moveToBonus= foundBonus;
 		}
 	//	if (!(moveToBonus == null))
 	//		System.out.println("Bonus = " + moveToBonus.getType());
@@ -71,11 +75,11 @@ public final class MyStrategy implements Strategy {
 			move.setAction(ActionType.MOVE);
 
 			if (random.nextBoolean()) {
-				move.setDirection(random.nextBoolean() ? Direction.NORTH
-						: Direction.SOUTH);
-			} else {
 				move.setDirection(random.nextBoolean() ? Direction.WEST
 						: Direction.EAST);
+			} else {
+				move.setDirection(random.nextBoolean() ? Direction.SOUTH
+						: Direction.NORTH);
 			}
 			// for (int pid = 0; pid < players.length; pid++) {
 			// System.out.println("Player: "+players[pid].getName()+" ");
@@ -91,9 +95,23 @@ public final class MyStrategy implements Strategy {
 			move.setAction(ActionType.MOVE);
 			if (!(moveToBonus == null))
 			{
-				System.out.println("Bonus = " + moveToBonus.getType()+"="+moveToBonus.getX()+" Y="+moveToBonus.getY());
-				move.setX(moveToBonus.getX());
-				move.setY(moveToBonus.getY());
+				//System.out.println("Self = " + moveToBonus.getType()+"="+moveToBonus.getX()+" Y="+moveToBonus.getY());
+				System.out.println("-=!=- Bonus : " + moveToBonus.getType()+" X="+moveToBonus.getX()+" Y="+moveToBonus.getY()+" id="+moveToBonus.getId());
+				if(moveToBonus.getX()==self.getX())
+				{
+					move.setDirection(moveToBonus.getY()<self.getY() ? Direction.NORTH
+							: Direction.SOUTH	);
+				}
+				else if(moveToBonus.getY()==self.getY()) moveToBonus = null;
+				else
+				{
+					move.setDirection(moveToBonus.getX()<self.getX() ? Direction.WEST
+							: Direction.EAST
+							);	
+				}
+				System.out.println("-=!=- Direction : " +move.getDirection());
+				//move.setX(moveToBonus.getX());
+				//move.setY(moveToBonus.getY());
 			
 			}
 		// get location
