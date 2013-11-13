@@ -129,9 +129,9 @@ public final class MyStrategy implements Strategy {
 			move.setX(self.getX());
 			move.setY(self.getY());
 			move.setAction(ActionType.HEAL);
-			if (isDebug)
+			/*if (isDebug)
 				System.out.println("-=!=- ActionType.HEAL : " + self.getType()
-						+ " sx=" + self.getX() + " sy=" + self.getY());
+						+ " sx=" + self.getX() + " sy=" + self.getY());*/
 			return;
 		}
 		this.world = world;
@@ -178,7 +178,7 @@ public final class MyStrategy implements Strategy {
 					myGeneral = null;
 			}
 
-			if (!trooreps[i].isTeammate()) {
+			if (!trooreps[i].isTeammate()&&trooreps[i].getHitpoints()>0) {
 				// haveVisibleenemys = true;
 				myEnimy = trooreps[i];
 				System.out.println("Enemy=" + trooreps[i].getType());
@@ -196,10 +196,12 @@ public final class MyStrategy implements Strategy {
 					move.setAction(ActionType.HEAL);
 					move.setX(trooreps[i].getX());
 					move.setY(trooreps[i].getY());
+					/*
 					if (isDebug)
 						System.out.println("-=!=- ActionType.HEAL : "
 								+ self.getType() + " sx=" + self.getX()
 								+ " sy=" + self.getY());
+								*/
 					return;
 				}
 				if (self.isHoldingMedikit()
@@ -207,6 +209,7 @@ public final class MyStrategy implements Strategy {
 					move.setAction(ActionType.USE_MEDIKIT);
 					move.setX(trooreps[i].getX());
 					move.setY(trooreps[i].getY());
+					/*
 					if (isDebug)
 						System.out.println("-=!=- ActionType.USE_MEDIKIT : "
 								+ self.getType() + " sx=" + self.getX()
@@ -215,6 +218,7 @@ public final class MyStrategy implements Strategy {
 								+ self.getActionPoints()
 								+ " game.getMedikitUseCost()="
 								+ game.getMedikitUseCost());
+								*/
 					return;
 				}
 			}
