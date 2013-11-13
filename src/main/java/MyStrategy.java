@@ -7,6 +7,7 @@ public final class MyStrategy implements Strategy {
 	Bonus moveToBonus = null;
 	Trooper myEnimy = null;
 	Trooper myCommander = null;
+	Trooper needHeal = null;
 	Trooper[] trooreps = null;
 	World world = null;
 	Trooper self = null;
@@ -118,6 +119,19 @@ public final class MyStrategy implements Strategy {
 			moveToBonus = null;
 			return;
 		}
+		if(self.isHoldingFieldRation() && self.getActionPoints()>game.getFieldRationEatCost())
+		{
+			move.setAction(ActionType.EAT_FIELD_RATION);
+			move.setY(self.getY());
+			move.setX(self.getX());
+	/*		if (isDebug)
+				System.out.println("-=!=- ActionType.EAT_FIELD_RATION : "
+						+ self.getType() + " sx=" + self.getX() + " sy="
+						+ self.getY() + " self.getActionPoints()="
+						+ self.getActionPoints() + " game.getActionPoints()="
+						+ game.getFieldRationEatCost());
+*/			return;
+		}
 		myEnimy = null;
 		if (self.getMaximalHitpoints() > self.getHitpoints()
 				&& self.isHoldingMedikit()
@@ -149,7 +163,7 @@ public final class MyStrategy implements Strategy {
 		trooreps = world.getTroopers();
 		// Player[] players = world.getPlayers();
 		Bonus[] bonuses = world.getBonuses();
-
+		needHeal= null;
 		if (moveToBonus == null)
 			for (int i = 0; i < bonuses.length; i++) {
 				Bonus foundBonus = null;
@@ -180,7 +194,11 @@ public final class MyStrategy implements Strategy {
 						&& Math.abs(self.getY() - myCommander.getY()) < 2)
 					myCommander = null;
 			}
-
+			 if (trooreps[i].isTeammate()
+					&& trooreps[i].getMaximalHitpoints() > trooreps[i]
+							.getHitpoints()&&(self.isHoldingMedikit() || self.getType() == TrooperType.FIELD_MEDIC))
+							needHeal = trooreps[i];
+			 
 			if (!trooreps[i].isTeammate()&&trooreps[i].getHitpoints()>0 ) {
 				if(null==myEnimy || myEnimy.getShootingRange()<trooreps[i].getShootingRange())
 					myEnimy = trooreps[i];
@@ -227,7 +245,14 @@ public final class MyStrategy implements Strategy {
 			}
 
 		}
-		if (myEnimy != null) {
+		if(needHeal != null){
+			move.setAction(ActionType.MOVE);
+			
+			needHeal = (myMove(needHeal, self, world, move, 0) ? myEnimy
+					: null);
+
+		}
+		else if (myEnimy != null) {
 			if (self.getShootCost() < self.getActionPoints()
 					&& world.isVisible(self.getShootingRange(), self.getX(),
 							self.getY(), self.getStance(), myEnimy.getX(),
