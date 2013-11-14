@@ -119,7 +119,8 @@ public final class MyStrategy implements Strategy {
 			moveToBonus = null;
 			return;
 		}
-		if(self.isHoldingFieldRation() && self.getActionPoints()>game.getFieldRationEatCost())
+		if(self.getMaximalHitpoints() > self.getHitpoints()
+				&&self.isHoldingFieldRation() && self.getActionPoints()>game.getFieldRationEatCost())
 		{
 			move.setAction(ActionType.EAT_FIELD_RATION);
 			move.setY(self.getY());
@@ -201,7 +202,7 @@ public final class MyStrategy implements Strategy {
 			 
 			if (!trooreps[i].isTeammate()&&trooreps[i].getHitpoints()>0 ) {
 				if(null==myEnimy || myEnimy.getShootingRange()<trooreps[i].getShootingRange())
-					myEnimy = trooreps[i];
+					myEnimy = (null==myEnimy ||self.getDistanceTo(myEnimy)<self.getDistanceTo(trooreps[i])?trooreps[i]:myEnimy);
 				if(isDebug) System.out.println("Enemy=" + trooreps[i].getType()+" eX="+trooreps[i].getX()+" eY="+trooreps[i].getY());
 			}
 			if (trooreps[i].isTeammate()
