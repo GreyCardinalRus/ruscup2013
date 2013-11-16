@@ -12,10 +12,10 @@ public final class MyStrategy implements Strategy {
 	World world = null;
 	Trooper self = null;
 
-	static final boolean isDebugFull = false;
+	static final boolean isDebugFull = true;
 	static final boolean isDebugMove = false;
 	static final boolean isDebugHeal = false;
-	static final boolean isDebugBonus = false;
+	static final boolean isDebugBonus = true;
 	static final boolean isDebugEnimy = true;
 	static final boolean isDebug = true;
 
@@ -55,13 +55,25 @@ public final class MyStrategy implements Strategy {
 
 	private boolean myMove(int targetX, int targetY, Trooper self, World world,
 			Move move, int dist, Game game) {
+		if(self.getActionPoints()>=game.getStanceChangeCost()&&
+				(self.getStance()==TrooperStance.PRONE)||self.getStance()==TrooperStance.KNEELING)
+		{
+			move.setAction(ActionType.RAISE_STANCE);
+			move.setX(self.getX());
+			move.setY(self.getY());
+			showDebug(move, self, isDebugMove, " ");
+			return true;
+		}
 
 		if (self.getActionPoints() < (self.getStance() == TrooperStance.STANDING ? game
 				.getStandingMoveCost()
 				: (self.getStance() == TrooperStance.KNEELING ? game
 						.getKneelingMoveCost() : game.getProneMoveCost()))) {
 			move.setAction(null);
+			if(isDebug) System.out.println("!not move!-"+self.getActionPoints());
 			return false;
+			
+			
 		}
 		/*
 		 * dir n==near f==far t==target b==bonus m==medic
@@ -138,32 +150,23 @@ public final class MyStrategy implements Strategy {
 			}
 		}
 
-		move.setX(newX);
-		move.setY(newY);
-		if(self.getActionPoints()>=game.getStanceChangeCost()&&
-						(self.getStance()==TrooperStance.PRONE)||self.getStance()==TrooperStance.KNEELING)
-				{
-					move.setAction(ActionType.RAISE_STANCE);
-					move.setX(self.getX());
-					move.setY(self.getY());
-					showDebug(move, self, isDebugMove, " ");
-					
-				}
+		move.setX(newX); move.setY(newY);move.setAction(ActionType.MOVE);
 
-		if (targetY == newY && targetX == newX){
+		if (self.getY() == newY && self.getX() == newX){
 			move.setAction(null);
 			return false;
 		}
-		move.setAction(ActionType.MOVE);
+		
 		return true;
 	}
 
 	@Override
 	public void move(Trooper self, World world, Game game, Move move) {
-		if (isDebug)
+		if (isDebug||isDebugFull)
 			System.out.println(self.getType() + " " + self.getActionPoints()
 					+ " sx=" + self.getX() + " sy=" + self.getY()
 					+ " Heal="+self.getHitpoints()+"% "
+					+ " "+self.getStance()
 					+ (self.isHoldingFieldRation() ? " FieldRation" : "")
 					+ (self.isHoldingGrenade() ? " Granade" : "")
 					+ (self.isHoldingMedikit() ? " MedKit" : ""));
@@ -375,7 +378,7 @@ public final class MyStrategy implements Strategy {
 				showDebug(move, self, isDebugEnimy, " -!=Enemy " + myEnimy.getType());
 				}
 
-				return;
+				if(move.getAction()==ActionType.MOVE||ActionType.LOWER_STANCE==move.getAction()) return;
 
 			}
 		} //else // freestyle
@@ -383,21 +386,22 @@ public final class MyStrategy implements Strategy {
 
 			if (moveToBonus != null) {
 
-				move.setAction(ActionType.MOVE);
+				//move.setAction(ActionType.MOVE);
 
 				myMove(moveToBonus, self, world, move, 0, game);
 				showDebug(move, self, isDebugBonus, " -!= moveToBonus "
 						+ moveToBonus.getType() + " (X=" + moveToBonus.getX()
 						+ " Y=" + moveToBonus.getY() + ")");
-
+              if(move.getAction()==ActionType.MOVE) return;
 			} else if (myCommander != null) {
 
-				move.setAction(ActionType.MOVE);
+				//move.setAction(ActionType.MOVE);
 
 				myCommander = (myMove(myCommander, self, world, move, 0, game) ? myCommander
 						: null);
 
 				showDebug(move, self, isDebugMove, " -!= myCommander ");
+				if(move.getAction()==ActionType.MOVE) return;
 			}
 			// get location
 
@@ -409,6 +413,7 @@ public final class MyStrategy implements Strategy {
 					myCommander = (myMove(myCommander, self, world, move, 0,
 							game) ? myCommander : null);
 					showDebug(move, self, isDebugMove, " -!= myCommander ");
+					if(move.getAction()==ActionType.MOVE) return;
 				} else {// if (self.getType() == TrooperType.COMMANDER) {
 						// if (nextY == 0)
 					{// init1
@@ -435,21 +440,23 @@ public final class MyStrategy implements Strategy {
 									+ nextY);
 					}
 
-					move.setAction(ActionType.MOVE);
+					//move.setAction(ActionType.MOVE);
 
 					myMove(nextX, nextY, self, world, move, 0, game);
 					showDebug(move, self, isDebugMove, " -!= freeStyle ");
+					if(move.getAction()==ActionType.MOVE) return;
 				}
 			}
 		}
 		if ((move.getAction() == ActionType.MOVE && move.getX() == self.getX() && move
 				.getY() == self.getY())
 				|| move.getAction() == ActionType.END_TURN) {
-			move.setAction(ActionType.MOVE);
+			//move.setAction(ActionType.MOVE);
 
 			myMove(nextX, nextY, self, world, move, 0, game);
 			showDebug(move, self, isDebugMove
 					&& move.getAction() == ActionType.MOVE, " -!= freeStyle ");
+			if(move.getAction()==ActionType.MOVE) return;
 		}
 		if (move.getAction() == ActionType.MOVE
 
