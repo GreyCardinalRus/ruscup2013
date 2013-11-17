@@ -4,11 +4,8 @@ import model.*;
 import java.util.LinkedList;
 
 public final class MyStrategy implements Strategy {
-	// private final Random random = new Random();
-	// Bonus moveToBonus = null;
+
 	Trooper teamEnimy = null;
-	// Trooper myCommander = null;
-	// Trooper needHeal = null;
 	Trooper[] trooreps = null;
 	World world = null;
 	Trooper self = null;
@@ -16,7 +13,7 @@ public final class MyStrategy implements Strategy {
 	static final boolean isDebugFull = false;
 	static final boolean isDebugMove = true;
 	static final boolean isDebugHeal = false;
-	static final boolean isDebugBonus = true;
+	static final boolean isDebugBonus = false;
 	static final boolean isDebugEnimy = true;
 	static final boolean isDebug = true;
 
@@ -76,38 +73,6 @@ public final class MyStrategy implements Strategy {
 		}
 		int newX = self.getX(), newY = self.getY();
 
-		if (targetY == newY && targetX == (newX + 1)
-				&& cellFree(newX + 1, newY, world)) {
-			newX = (newX + 1);
-			move.setX(newX);
-			move.setY(newY);
-			move.setAction(ActionType.MOVE);
-			return true;
-		}
-		if (targetY == newY && targetX == (newX - 1)
-				&& cellFree(newX - 1, newY, world)) {
-			newX = (newX - 1);
-			move.setX(newX);
-			move.setY(newY);
-			move.setAction(ActionType.MOVE);
-			return true;
-		}
-		if (targetX == newX && targetY == (newY + 1)
-				&& cellFree(newX, newY + 1, world)) {
-			newY = (newY + 1);
-			move.setX(newX);
-			move.setY(newY);
-			move.setAction(ActionType.MOVE);
-			return true;
-		}
-		if (targetX == newX && targetY == (newY - 1)
-				&& cellFree(newX, newY - 1, world)) {
-			newY = (newY - 1);
-			move.setX(newX);
-			move.setY(newY);
-			move.setAction(ActionType.MOVE);
-			return true;
-		}
 		// Если ячейка - солдат -то прокладываем маршрут к ячейке рядом с ним
 		// -свободной!
 		if (!cellFree(targetX, targetY, world)) {
@@ -119,6 +84,48 @@ public final class MyStrategy implements Strategy {
 				targetY = targetY + 1;
 			else if (cellFree(targetX, targetY - 1, world))
 				targetY = targetY - 1;
+		}
+
+		if (targetY == newY && targetX == (newX + 1)) {
+			if (cellFree(newX + 1, newY, world)) {
+				newX = (newX + 1);
+				move.setX(newX);
+				move.setY(newY);
+				move.setAction(ActionType.MOVE);
+
+				return true;
+			}
+			return false;
+		}
+		if (targetY == newY && targetX == (newX - 1)) {
+			if (cellFree(newX - 1, newY, world)) {
+				newX = (newX - 1);
+				move.setX(newX);
+				move.setY(newY);
+				move.setAction(ActionType.MOVE);
+				return true;
+			}
+			return false;
+		}
+		if (targetX == newX && targetY == (newY + 1)) {
+			if (cellFree(newX, newY + 1, world)) {
+				newY = (newY + 1);
+				move.setX(newX);
+				move.setY(newY);
+				move.setAction(ActionType.MOVE);
+				return true;
+			}
+			return false;
+		}
+		if (targetX == newX && targetY == (newY - 1)) {
+			if (cellFree(newX, newY - 1, world)) {
+				newY = (newY - 1);
+				move.setX(newX);
+				move.setY(newY);
+				move.setAction(ActionType.MOVE);
+				return true;
+			}
+			return false;
 		}
 		//
 		// Создадим все нужные списки
@@ -135,18 +142,21 @@ public final class MyStrategy implements Strategy {
 
 		if (isDebugMove)
 			System.out.println(" -= CalcRoute=- "
-					// + "world.getWidth="
-					// + world.getWidth() + " world.getHeight()="
-					// + world.getHeight()
-					+ "from x=" + self.getX() + " y=" + self.getY()
-					+ " targetX=" + targetX + " targetY=" + targetY);
+					+ "from x="
+					+ self.getX()
+					+ " y="
+					+ self.getY()
+					+ " targetX="
+					+ targetX
+					+ " targetY="
+					+ targetY
+					+ (aStar.nextCell() == null ? " no route" : " next: "
+							+ aStar.nextCell().x + " " + aStar.nextCell().y));
 		if (aStar.nextCell() == null) {
 			if (isDebugMove)
-//				aStar.printRoute();
+				aStar.printRoute();
 			return false;
 		}
-
-		System.out.println(aStar.nextCell().x + " " + aStar.nextCell().y);
 		newX = aStar.nextCell().x;
 		newY = aStar.nextCell().y;
 		move.setX(newX);
@@ -180,7 +190,8 @@ public final class MyStrategy implements Strategy {
 		}
 		if (!foundTeamEnime)
 			teamEnimy = null;
-		if(self.getType() == TrooperType.COMMANDER) myCommander = null;
+		if (self.getType() == TrooperType.COMMANDER)
+			myCommander = null;
 		if (isDebug || isDebugFull)
 			System.out.println(self.getType()
 					+ " "
@@ -395,6 +406,14 @@ public final class MyStrategy implements Strategy {
 				return;
 
 		} else if (myEnimy != null) {
+			if (self.isHoldingFieldRation()
+					&& self.getActionPoints() >= game.getFieldRationEatCost()) {
+				move.setAction(ActionType.EAT_FIELD_RATION);
+				move.setY(self.getY());
+				move.setX(self.getX());
+				showDebug(move, self, isDebugEnimy, "");
+				return;
+			}
 			if (self.isHoldingGrenade()
 					&& game.getGrenadeThrowCost() <= self.getActionPoints()
 					&& game.getGrenadeThrowRange() >= self
