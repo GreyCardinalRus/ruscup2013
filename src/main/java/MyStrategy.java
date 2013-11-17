@@ -6,9 +6,6 @@ import java.util.LinkedList;
 public final class MyStrategy implements Strategy {
 
 	Trooper teamEnimy = null;
-	// Trooper[] trooreps = null;
-	// World world = null;
-	// Trooper self = null;
 
 	static final boolean isDebugFull = false;
 	static final boolean isDebugMove = false;
@@ -165,23 +162,26 @@ public final class MyStrategy implements Strategy {
 
 	private Trooper defineEnimy(Trooper self, World world) {
 		Trooper[] trooreps = world.getTroopers();
-		Trooper myEnimy=null;
+		Trooper myEnimy = null;
+		// приоритет -медик!
 		for (int i = 0; i < trooreps.length; i++) {
 			if (!trooreps[i].isTeammate() && trooreps[i].getHitpoints() > 0) {
-		
-			if (null == myEnimy
-					|| myEnimy.getShootingRange() < trooreps[i]
-							.getShootingRange())
-				myEnimy = (null == myEnimy
-						|| self.getDistanceTo(myEnimy) > self
-								.getDistanceTo(trooreps[i]) ? trooreps[i]
-						: myEnimy);
-			if (isDebugEnimy)
-				System.out.println("	Enemy=" + trooreps[i].getType()
-						+ " eX=" + trooreps[i].getX() + " eY="
-						+ trooreps[i].getY() + " dist="
-						+ self.getDistanceTo(trooreps[i]) + " heal="
-						+ trooreps[i].getHitpoints() + "%");
+
+				if (null == myEnimy
+						|| trooreps[i].getType() == TrooperType.FIELD_MEDIC
+						|| myEnimy.getShootingRange() < trooreps[i]
+								.getShootingRange())
+					myEnimy = (null == myEnimy
+							|| trooreps[i].getType() == TrooperType.FIELD_MEDIC
+							|| self.getDistanceTo(myEnimy) > self
+									.getDistanceTo(trooreps[i]) ? trooreps[i]
+							: myEnimy);
+				if (isDebugEnimy)
+					System.out.println("	Enemy=" + trooreps[i].getType()
+							+ " eX=" + trooreps[i].getX() + " eY="
+							+ trooreps[i].getY() + " dist="
+							+ self.getDistanceTo(trooreps[i]) + " heal="
+							+ trooreps[i].getHitpoints() + "%");
 			}
 		}
 		return myEnimy;
@@ -250,9 +250,9 @@ public final class MyStrategy implements Strategy {
 		Trooper myCommander = defineLeader(self, world);
 		boolean foundTeamEnime = false;
 
-		for (int i = 0; i < trooreps.length; i++) {
+		for (int i = 0; i < trooreps.length && teamEnimy != null; i++) {
 
-			if (trooreps[i] == teamEnimy)
+			if (trooreps[i].getId() == teamEnimy.getId())
 				foundTeamEnime = true;
 		}
 		if (!foundTeamEnime)
@@ -286,25 +286,12 @@ public final class MyStrategy implements Strategy {
 							+ ")" + teamEnimy.getHitpoints() + " "
 							+ teamEnimy.getTeammateIndex() : ""));
 
-		// Может гранатой достанем!
-		if (null != teamEnimy && self.isHoldingGrenade()
-				&& game.getGrenadeThrowCost() < self.getActionPoints()
-				&& game.getGrenadeThrowRange() >= self.getDistanceTo(teamEnimy)) {
-			move.setAction(ActionType.THROW_GRENADE);
-			move.setX(teamEnimy.getX());
-			move.setY(teamEnimy.getY());
-
-			showDebug(move, self, isDebugEnimy,
-					" -!=teamEnimy " + teamEnimy.getType());
-			return;
-
-		}
-
-		if (self.getActionPoints() < 1) {// game.getStandingMoveCost()) {
-			// moveToBonus = null;
+		if (self.getActionPoints() < 1
+				&& self.getType() != TrooperType.FIELD_MEDIC) {// game.getStandingMoveCost())
+																// {
 			return;
 		}
-		if (self.getMaximalHitpoints()*0.95 > self.getHitpoints()
+		if (self.getMaximalHitpoints() * 0.95 > self.getHitpoints()
 				&& self.isHoldingFieldRation()
 				&& self.getActionPoints() < (self.getInitialActionPoints() - game
 						.getFieldRationBonusActionPoints())
@@ -321,7 +308,25 @@ public final class MyStrategy implements Strategy {
 		for (int i = 0; i < trooreps.length; i++) {
 			myEnimy = trooreps[i];
 
-			// добъем одним выстрелом?
+			// Или гранатой достанем!
+			if (!myEnimy.isTeammate()
+					&& self.isHoldingGrenade()
+					&& game.getGrenadeThrowCost() <= self.getActionPoints()
+					&& game.getGrenadeThrowRange() >= self
+							.getDistanceTo(myEnimy)) {
+				move.setAction(ActionType.THROW_GRENADE);
+				move.setX(myEnimy.getX());
+				move.setY(myEnimy.getY());
+
+				showDebug(
+						move,
+						self,
+						isDebugEnimy,
+						" -!=Enemy " + myEnimy.getType() + " "
+								+ myEnimy.getHitpoints());
+				return;
+
+			} // добъем одним выстрелом?
 			if (!myEnimy.isTeammate()
 					&& myEnimy.getHitpoints() > 0
 					&& myEnimy.getHitpoints() <= self.getDamage()
@@ -339,24 +344,10 @@ public final class MyStrategy implements Strategy {
 						" -!=Enemy " + myEnimy.getType());
 				return;
 			}
-			// Или гранатой достанем!
-			if (!myEnimy.isTeammate()
-					&& self.isHoldingGrenade()
-					&& game.getGrenadeThrowCost() <= self.getActionPoints()
-					&& game.getGrenadeThrowRange() >= self
-							.getDistanceTo(myEnimy)) {
-				move.setAction(ActionType.THROW_GRENADE);
-				move.setX(myEnimy.getX());
-				move.setY(myEnimy.getY());
 
-				showDebug(move, self, isDebugEnimy,
-						" -!=Enemy " + myEnimy.getType()+" "+myEnimy.getHitpoints());
-				return;
-
-			}
 		}
 		myEnimy = null;
-		if (self.getMaximalHitpoints()*0.95 > self.getHitpoints()
+		if (self.getMaximalHitpoints() * 0.45 > self.getHitpoints()
 				&& self.isHoldingMedikit()
 				&& self.getActionPoints() >= game.getMedikitUseCost()) {
 			move.setAction(ActionType.USE_MEDIKIT);
@@ -366,7 +357,7 @@ public final class MyStrategy implements Strategy {
 			showDebug(move, self, isDebugHeal, "");
 			return;
 		}
-		if (self.getMaximalHitpoints()*0.95 > self.getHitpoints()
+		if (self.getMaximalHitpoints() * 0.95 > self.getHitpoints()
 				&& self.getType() == TrooperType.FIELD_MEDIC
 				&& self.getActionPoints() >= game.getFieldMedicHealCost()) {
 			move.setX(self.getX());
@@ -378,20 +369,20 @@ public final class MyStrategy implements Strategy {
 		Trooper needHeal = null;
 		// Player[] players = world.getPlayers();
 		moveToBonus = defineBonus(self, world);
-		myEnimy  = defineEnimy(self, world);
+		myEnimy = defineEnimy(self, world);
 		for (int i = 0; i < trooreps.length; i++) {
 
-				// if (game.getCommanderAuraRange() > self
-				// .getDistanceTo(myCommander))
-				// myCommander = null;
+			// if (game.getCommanderAuraRange() > self
+			// .getDistanceTo(myCommander))
+			// myCommander = null;
 			if (trooreps[i].isTeammate()
-					&& trooreps[i].getMaximalHitpoints()*0.95 > trooreps[i]
+					&& trooreps[i].getMaximalHitpoints() * 0.95 > trooreps[i]
 							.getHitpoints()
 					&& (self.isHoldingMedikit() || self.getType() == TrooperType.FIELD_MEDIC))
 				needHeal = trooreps[i];
 
-				if (trooreps[i].isTeammate()
-					&& trooreps[i].getMaximalHitpoints()*0.95 > trooreps[i]
+			if (trooreps[i].isTeammate()
+					&& trooreps[i].getMaximalHitpoints() * 0.95 > trooreps[i]
 							.getHitpoints()
 					&& (trooreps[i].getY() == self.getY()
 							&& Math.abs(trooreps[i].getX() - self.getX()) < 2 || trooreps[i]
@@ -407,7 +398,9 @@ public final class MyStrategy implements Strategy {
 					return;
 				}
 				if (self.isHoldingMedikit()
-						&& self.getActionPoints() >= game.getMedikitUseCost()) {
+						&& self.getActionPoints() >= game.getMedikitUseCost()
+						&& trooreps[i].getMaximalHitpoints() * 0.55 > trooreps[i]
+								.getHitpoints()) {
 					move.setAction(ActionType.USE_MEDIKIT);
 					move.setX(trooreps[i].getX());
 					move.setY(trooreps[i].getY());
