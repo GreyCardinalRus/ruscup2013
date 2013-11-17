@@ -6,12 +6,12 @@ import java.util.LinkedList;
 public final class MyStrategy implements Strategy {
 
 	Trooper teamEnimy = null;
-	Trooper[] trooreps = null;
-	World world = null;
-	Trooper self = null;
+	// Trooper[] trooreps = null;
+	// World world = null;
+	// Trooper self = null;
 
 	static final boolean isDebugFull = false;
-	static final boolean isDebugMove = true;
+	static final boolean isDebugMove = false;
 	static final boolean isDebugHeal = false;
 	static final boolean isDebugBonus = false;
 	static final boolean isDebugEnimy = true;
@@ -34,8 +34,7 @@ public final class MyStrategy implements Strategy {
 			return false;
 		Trooper[] trooreps = world.getTroopers();
 		for (int i = 0; i < trooreps.length; i++) {
-			if (trooreps[i].getId() != self.getId() && trooreps[i].getY() == y
-					&& trooreps[i].getX() == x)
+			if (trooreps[i].getY() == y && trooreps[i].getX() == x)
 				return false;
 		}
 		return true;
@@ -152,45 +151,112 @@ public final class MyStrategy implements Strategy {
 					+ targetY
 					+ (aStar.nextCell() == null ? " no route" : " next: "
 							+ aStar.nextCell().x + " " + aStar.nextCell().y));
+
 		if (aStar.nextCell() == null) {
 			if (isDebugMove)
 				aStar.printRoute();
 			return false;
 		}
-		newX = aStar.nextCell().x;
-		newY = aStar.nextCell().y;
-		move.setX(newX);
-		move.setY(newY);
+		move.setX(aStar.nextCell().x);
+		move.setY(aStar.nextCell().y);
 		move.setAction(ActionType.MOVE);
 		return true;
 	}
 
-	@Override
-	public void move(Trooper self, World world, Game game, Move move) {
-		this.world = world;
-		this.self = self;
-		trooreps = world.getTroopers();
-		Trooper myCommander = null;
-		boolean foundTeamEnime = false;
+	private Trooper defineEnimy(Trooper self, World world) {
+		Trooper[] trooreps = world.getTroopers();
+		Trooper myEnimy=null;
+		for (int i = 0; i < trooreps.length; i++) {
+			if (!trooreps[i].isTeammate() && trooreps[i].getHitpoints() > 0) {
+		}
+			if (null == myEnimy
+					|| myEnimy.getShootingRange() < trooreps[i]
+							.getShootingRange())
+				myEnimy = (null == myEnimy
+						|| self.getDistanceTo(myEnimy) > self
+								.getDistanceTo(trooreps[i]) ? trooreps[i]
+						: myEnimy);
+			if (isDebugEnimy)
+				System.out.println("	Enemy=" + trooreps[i].getType()
+						+ " eX=" + trooreps[i].getX() + " eY="
+						+ trooreps[i].getY() + " dist="
+						+ self.getDistanceTo(trooreps[i]) + " heal="
+						+ trooreps[i].getHitpoints() + "%");
+		}
+		return myEnimy;
+	}
+
+	private Trooper defineLeader(Trooper self, World world) {
+		Trooper isCommander = null, isSolder = null, isScout = null, isMedic = null, isSniper = null;
+		Trooper[] trooreps = world.getTroopers();
 		for (int i = 0; i < trooreps.length; i++) {
 
-			if (trooreps[i].isTeammate() && trooreps[i].getId() != self.getId()) {
+			if (trooreps[i].isTeammate()) {
 				if (trooreps[i].getType() == TrooperType.COMMANDER)
-					myCommander = trooreps[i];
-				else if ((null == myCommander || (myCommander.getType() != TrooperType.COMMANDER && myCommander
-						.getType() != TrooperType.SOLDIER)
-						&& trooreps[i].getType() == TrooperType.SCOUT))
-					myCommander = trooreps[i];
-				else if ((null == myCommander || myCommander.getType() != TrooperType.COMMANDER)
-						&& trooreps[i].getType() == TrooperType.SOLDIER)
-					myCommander = trooreps[i];
+					isCommander = trooreps[i];
+				else if (trooreps[i].getType() == TrooperType.SOLDIER)
+					isSolder = trooreps[i];
+				else if (trooreps[i].getType() == TrooperType.SCOUT)
+					isScout = trooreps[i];
+				else if (trooreps[i].getType() == TrooperType.SNIPER)
+					isSniper = trooreps[i];
+				else if (trooreps[i].getType() == TrooperType.FIELD_MEDIC)
+					isMedic = trooreps[i];
 			}
+
+		}
+
+		return (isCommander != null ? isCommander : (isScout != null ? isScout
+				: (isSolder != null ? isSolder : (isSniper != null ? isSniper
+						: (isMedic != null ? isMedic : null)))));
+	}
+
+	private Bonus defineBonus(Trooper self, World world) {
+		Bonus[] bonuses = world.getBonuses();
+
+		Bonus moveToBonus = null;
+		for (int i = 0; i < bonuses.length; i++) {
+			Bonus foundBonus = null;
+			if (bonuses[i].getType() == BonusType.FIELD_RATION
+					&& !self.isHoldingFieldRation()) {
+				foundBonus = bonuses[i];
+			} else if (bonuses[i].getType() == BonusType.GRENADE
+					&& !self.isHoldingGrenade()) {
+				foundBonus = bonuses[i];
+			} else if (bonuses[i].getType() == BonusType.MEDIKIT
+					&& !self.isHoldingMedikit()) {
+				foundBonus = bonuses[i];
+			}
+			if (foundBonus == null)
+				continue;
+			if (foundBonus.getType() == BonusType.MEDIKIT
+					|| moveToBonus == null)
+				moveToBonus = foundBonus;
+
+			if ((moveToBonus.getType() != BonusType.MEDIKIT || foundBonus
+					.getType() == BonusType.MEDIKIT)
+					&& self.getDistanceTo(moveToBonus) > self
+							.getDistanceTo(foundBonus))
+				moveToBonus = foundBonus;
+		}
+		return moveToBonus;
+	}
+
+	@Override
+	public void move(Trooper self, World world, Game game, Move move) {
+
+		Trooper[] trooreps = world.getTroopers();
+		Trooper myCommander = defineLeader(self, world);
+		boolean foundTeamEnime = false;
+
+		for (int i = 0; i < trooreps.length; i++) {
+
 			if (trooreps[i] == teamEnimy)
 				foundTeamEnime = true;
 		}
 		if (!foundTeamEnime)
 			teamEnimy = null;
-		if (self.getType() == TrooperType.COMMANDER)
+		if (self == myCommander)
 			myCommander = null;
 		if (isDebug || isDebugFull)
 			System.out.println(self.getType()
@@ -239,6 +305,8 @@ public final class MyStrategy implements Strategy {
 		}
 		if (self.getMaximalHitpoints() > self.getHitpoints()
 				&& self.isHoldingFieldRation()
+				&& self.getActionPoints() < (self.getInitialActionPoints() - game
+						.getFieldRationBonusActionPoints())
 				&& self.getActionPoints() >= game.getFieldRationEatCost()) {
 			move.setAction(ActionType.EAT_FIELD_RATION);
 			move.setY(self.getY());
@@ -281,7 +349,7 @@ public final class MyStrategy implements Strategy {
 				move.setY(myEnimy.getY());
 
 				showDebug(move, self, isDebugEnimy,
-						" -!=Enemy " + myEnimy.getType());
+						" -!=Enemy " + myEnimy.getType()+" "+myEnimy.getHitpoints());
 				return;
 
 			}
@@ -306,67 +374,21 @@ public final class MyStrategy implements Strategy {
 			showDebug(move, self, isDebugHeal, "");
 			return;
 		}
-
-		// Player[] players = world.getPlayers();
-		Bonus[] bonuses = world.getBonuses();
 		Trooper needHeal = null;
-		if (moveToBonus == null)
-			for (int i = 0; i < bonuses.length; i++) {
-				Bonus foundBonus = null;
-				if (bonuses[i].getType() == BonusType.FIELD_RATION
-						&& !self.isHoldingFieldRation()) {
-					foundBonus = bonuses[i];
-				} else if (bonuses[i].getType() == BonusType.GRENADE
-						&& !self.isHoldingGrenade()) {
-					foundBonus = bonuses[i];
-				} else if (bonuses[i].getType() == BonusType.MEDIKIT
-						&& !self.isHoldingMedikit()) {
-					foundBonus = bonuses[i];
-				}
-				if (foundBonus == null)
-					continue;
-				if (foundBonus.getType() == BonusType.MEDIKIT
-						|| moveToBonus == null)
-					moveToBonus = foundBonus;
-
-				if ((moveToBonus.getType() != BonusType.MEDIKIT || foundBonus
-						.getType() == BonusType.MEDIKIT)
-						&& self.getDistanceTo(moveToBonus) > self
-								.getDistanceTo(foundBonus))
-					moveToBonus = foundBonus;
-			}
+		// Player[] players = world.getPlayers();
+		moveToBonus = defineBonus(self, world);
 		for (int i = 0; i < trooreps.length; i++) {
 
-			if (null == myCommander && trooreps[i].isTeammate()
-					&& trooreps[i].getId() != self.getId()
-					&& trooreps[i].getType() == TrooperType.COMMANDER) {
-				myCommander = trooreps[i];
 				// if (game.getCommanderAuraRange() > self
 				// .getDistanceTo(myCommander))
 				// myCommander = null;
-			}
 			if (trooreps[i].isTeammate()
 					&& trooreps[i].getMaximalHitpoints() > trooreps[i]
 							.getHitpoints()
 					&& (self.isHoldingMedikit() || self.getType() == TrooperType.FIELD_MEDIC))
 				needHeal = trooreps[i];
 
-			if (!trooreps[i].isTeammate() && trooreps[i].getHitpoints() > 0) {
-				if (null == myEnimy
-						|| myEnimy.getShootingRange() < trooreps[i]
-								.getShootingRange())
-					myEnimy = (null == myEnimy
-							|| self.getDistanceTo(myEnimy) > self
-									.getDistanceTo(trooreps[i]) ? trooreps[i]
-							: myEnimy);
-				if (isDebugEnimy)
-					System.out.println("	Enemy=" + trooreps[i].getType()
-							+ " eX=" + trooreps[i].getX() + " eY="
-							+ trooreps[i].getY() + " dist="
-							+ self.getDistanceTo(trooreps[i]) + " heal="
-							+ trooreps[i].getHitpoints() + "%");
-			}
-			if (trooreps[i].isTeammate()
+				if (trooreps[i].isTeammate()
 					&& trooreps[i].getMaximalHitpoints() > trooreps[i]
 							.getHitpoints()
 					&& (trooreps[i].getY() == self.getY()
@@ -407,7 +429,9 @@ public final class MyStrategy implements Strategy {
 
 		} else if (myEnimy != null) {
 			if (self.isHoldingFieldRation()
-					&& self.getActionPoints() >= game.getFieldRationEatCost()) {
+					&& self.getActionPoints() >= game.getFieldRationEatCost()
+					&& self.getActionPoints() < (self.getInitialActionPoints() - game
+							.getFieldRationBonusActionPoints())) {
 				move.setAction(ActionType.EAT_FIELD_RATION);
 				move.setY(self.getY());
 				move.setX(self.getX());
