@@ -1,6 +1,7 @@
 import model.*;
 
-import java.util.Random;
+//import java.util.Random;
+import java.util.LinkedList;
 
 public final class MyStrategy implements Strategy {
 	// private final Random random = new Random();
@@ -15,7 +16,7 @@ public final class MyStrategy implements Strategy {
 	static final boolean isDebugFull = false;
 	static final boolean isDebugMove = true;
 	static final boolean isDebugHeal = false;
-	static final boolean isDebugBonus = false;
+	static final boolean isDebugBonus = true;
 	static final boolean isDebugEnimy = true;
 	static final boolean isDebug = true;
 
@@ -73,115 +74,81 @@ public final class MyStrategy implements Strategy {
 			return false;
 
 		}
-		/*
-		 * dir n==near f==far t==target b==bonus m==medic
-		 */
 		int newX = self.getX(), newY = self.getY();
-		// if(self.getDistanceTo(newX, newY)<(dist+2) &&self.getDistanceTo(newX,
-		// newY)>(dist-2)) return false;
-		// if (dist > 2 && self.getDistanceTo(newX, newY) < (dist + 2)) {
-		// if (newX < targetX && cellFree(newX - 1, newY, world))
-		// newX--;
-		// else if (newX > targetX && cellFree(newX + 1, newY, world))
-		// newX++;
-		// else if (newY < targetY && cellFree(newX, newY - 1, world))
-		// newY--;
-		// else if (newY > targetY && cellFree(newX, newY + 1, world))
-		// newY++;
-		// return true;
-		// }
 
-		boolean Xfree = true, Yfree = true;
-		if (targetY != newY) {
-			for (int iy = (targetY < newY ? targetY : newY); iy < (targetY > newY ? targetY
-					: newY); iy++) {
-				if (!cellFree(targetX, iy, world))
-					Yfree = false;
+		if (targetY == newY && targetX == (newX + 1)
+				&& cellFree(newX + 1, newY, world)) {
+			newX = (newX + 1);
+			move.setX(newX);
+			move.setY(newY);
+			move.setAction(ActionType.MOVE);
+			return true;
+		}
+		if (targetY == newY && targetX == (newX - 1)
+				&& cellFree(newX - 1, newY, world)) {
+			newX = (newX - 1);
+			move.setX(newX);
+			move.setY(newY);
+			move.setAction(ActionType.MOVE);
+			return true;
+		}
+		if (targetX == newX && targetY == (newY + 1)
+				&& cellFree(newX, newY + 1, world)) {
+			newY = (newY + 1);
+			move.setX(newX);
+			move.setY(newY);
+			move.setAction(ActionType.MOVE);
+			return true;
+		}
+		if (targetX == newX && targetY == (newY - 1)
+				&& cellFree(newX, newY - 1, world)) {
+			newY = (newY - 1);
+			move.setX(newX);
+			move.setY(newY);
+			move.setAction(ActionType.MOVE);
+			return true;
+		}
+		// Если ячейка - солдат -то прокладываем маршрут к ячейке рядом с ним
+		// -свободной!
+		if (!cellFree(targetX, targetY, world)) {
+			if (cellFree(targetX + 1, targetY, world))
+				targetX = targetX + 1;
+			else if (cellFree(targetX - 1, targetY, world))
+				targetX = targetX - 1;
+			else if (cellFree(targetX, targetY + 1, world))
+				targetY = targetY + 1;
+			else if (cellFree(targetX, targetY - 1, world))
+				targetY = targetY - 1;
+		}
+		//
+		// Создадим все нужные списки
+		AStar aStar = new AStar(world.getWidth(), world.getHeight());
+		// Заполним карту как-то клетками, учитывая преграду
+		for (int x = 0; x < world.getWidth(); x++) {
+			for (int y = 0; y < world.getHeight(); y++) {
+				aStar.cellList.add(new Cell(x, y, !cellFree(x, y, world)));
 			}
 		}
-		if (targetX != newX) {
-			for (int ix = (targetX < newX ? targetX : newX); ix < (targetX > newX ? targetX
-					: newX); ix++) {
-				if (!cellFree(ix, targetY, world))
-					Xfree = false;
-			}
-		}
-		// if (isDebug) System.out.println("-=!=- target : " +
-		// " X="+targetX+" Y="+targetY+" id=");
-		if (Xfree && Yfree) {
-			// if (isDebug) System.out.println("-=!=- target : " +
-			// " X="+target.getX()+" Y="+target.getY()+" id="+target.getId());
-			if (targetY != self.getY()) {
-				newY += (targetY < self.getY() ? -1 : 1);
-				if (!cellFree(newX, newY, world))
-					newY = self.getY();
-			}
 
-			if (newY == self.getY() && targetX != self.getX()) {
-				newX += targetX < self.getX() ? -1 : 1;
-				if (!cellFree(newX, newY, world))
-					newX = self.getX();
-			}
-		} else if (Xfree) {
-			if (targetX != self.getX()) {
-				newX += targetX < self.getX() ? -1 : 1;
-				if (!cellFree(newX, newY, world))
-					newX = self.getX();
-			}
-			if (newX == self.getX() && targetY != self.getY()) {
-				newY += (targetY < self.getY() ? -1 : 1);
-				if (!cellFree(newX, newY, world))
-					newY = self.getY();
-			}
+		aStar.calculateRoute(new Cell(self.getX(), self.getY()), new Cell(
+				targetX, targetY));
 
-		} else if (Yfree) {
-			if (targetY != self.getY()) {
-				newY += (targetY < self.getY() ? -1 : 1);
-				if (!cellFree(newX, newY, world))
-					newY = self.getY();
-			}
-
-			if (newY == self.getY() && targetX != self.getX()) {
-				newX += targetX < self.getX() ? -1 : 1;
-				if (!cellFree(newX, newY, world))
-					newX = self.getX();
-			}
-		}
-		if (self.getY() == newY && self.getX() == newX) {
-			// random?
-			newX += targetX < self.getX() ? -1 : 1;
-			if (!cellFree(newX, newY, world)) {
-				newX = self.getX();
-				newY += targetY < self.getY() ? -1 : 1;
-				if (!cellFree(newX, newY, world)) {
-					newY = self.getY();
-					newX -= targetX < self.getX() ? -1 : 1;
-					if (!cellFree(newX, newY, world)) {
-						newX = self.getX();
-						newY -= targetY < self.getY() ? -1 : 1;
-						if (!cellFree(newX, newY, world))
-							newY = self.getY();
-					}
-				}
-			}
+		if (isDebugMove)
+			System.out.println(" -= CalcRoute=- "
+					// + "world.getWidth="
+					// + world.getWidth() + " world.getHeight()="
+					// + world.getHeight()
+					+ "from x=" + self.getX() + " y=" + self.getY()
+					+ " targetX=" + targetX + " targetY=" + targetY);
+		if (aStar.nextCell() == null) {
 			if (isDebugMove)
-				System.out
-						.println(" -= Random!=- Xfree=" + Xfree + " Yfree="
-								+ Yfree + " targetX=" + targetX + " targetY="
-								+ targetY);
-
-		}
-
-		if (self.getY() == newY && self.getX() == newX) {
-			if (isDebug)
-				System.out
-						.println(" -= Stay!=- Xfree=" + Xfree + " Yfree="
-								+ Yfree + " targetX=" + targetX + " targetY="
-								+ targetY);
-			move.setAction(null);
+//				aStar.printRoute();
 			return false;
 		}
 
+		System.out.println(aStar.nextCell().x + " " + aStar.nextCell().y);
+		newX = aStar.nextCell().x;
+		newY = aStar.nextCell().y;
 		move.setX(newX);
 		move.setY(newY);
 		move.setAction(ActionType.MOVE);
@@ -194,7 +161,7 @@ public final class MyStrategy implements Strategy {
 		this.self = self;
 		trooreps = world.getTroopers();
 		Trooper myCommander = null;
-		boolean foundTeamEnime=false;
+		boolean foundTeamEnime = false;
 		for (int i = 0; i < trooreps.length; i++) {
 
 			if (trooreps[i].isTeammate() && trooreps[i].getId() != self.getId()) {
@@ -208,10 +175,12 @@ public final class MyStrategy implements Strategy {
 						&& trooreps[i].getType() == TrooperType.SOLDIER)
 					myCommander = trooreps[i];
 			}
-			if (trooreps[i]==teamEnimy) foundTeamEnime=true; 
+			if (trooreps[i] == teamEnimy)
+				foundTeamEnime = true;
 		}
 		if (!foundTeamEnime)
 			teamEnimy = null;
+		if(self.getType() == TrooperType.COMMANDER) myCommander = null;
 		if (isDebug || isDebugFull)
 			System.out.println(self.getType()
 					+ " "
@@ -568,5 +537,350 @@ public final class MyStrategy implements Strategy {
 						|| move.getX() < 0 || move.getY() < 0 || !cellFree(
 							move.getX(), move.getY(), world)))
 			move.setAction(null);
+	}
+}
+
+class Cell {
+	/**
+	 * Создает клетку с координатами x, y.
+	 * 
+	 * @param blocked
+	 *            является ли клетка непроходимой
+	 */
+	public Cell(int x, int y, boolean blocked) {
+		this.x = x;
+		this.y = y;
+		this.blocked = blocked;
+	}
+
+	public Cell(int x, int y) {
+		this.x = x;
+		this.y = y;
+		this.blocked = false;
+	}
+
+	/**
+	 * Функция вычисления манхеттенского расстояния от текущей клетки до finish
+	 * 
+	 * @param finish
+	 *            конечная клетка
+	 * @return расстояние
+	 */
+	public int mandist(Cell finish) {
+		return 10 * (Math.abs(this.x - finish.x) + Math.abs(this.y - finish.y));
+	}
+
+	/**
+	 * Вычисление стоимости пути до соседней клетки finish
+	 * 
+	 * @param finish
+	 *            соседняя клетка
+	 * @return 10, если клетка по горизонтали или вертикали от текущей, 14, если
+	 *         по диагонали (это типа 1 и sqrt(2) ~ 1.44)
+	 */
+	public int price(Cell finish) {
+		if (this.x == finish.x || this.y == finish.y) {
+			return 10;
+		} else {
+			return 1000000;
+		}
+	}
+
+	/**
+	 * Устанавливает текущую клетку как стартовую
+	 */
+	public void setAsStart() {
+		this.start = true;
+	}
+
+	/**
+	 * Устанавливает текущую клетку как конечную
+	 */
+	public void setAsFinish() {
+		this.finish = true;
+	}
+
+	/**
+	 * Сравнение клеток
+	 * 
+	 * @param second
+	 *            вторая клетка
+	 * @return true, если координаты клеток равны, иначе - false
+	 */
+	public boolean equals(Cell second) {
+		return (this.x == second.x) && (this.y == second.y);
+	}
+
+	/**
+	 * Красиво печатаем * - путь (это в конце) + - стартовая или конечная # -
+	 * непроходимая . - обычная
+	 * 
+	 * @return строковое представление клетки
+	 */
+	public String toString() {
+		if (this.road) {
+			return " * ";
+		}
+		if (this.start || this.finish) {
+			return " + ";
+		}
+		if (this.blocked) {
+			return " # ";
+		}
+		return " . ";
+	}
+
+	public int x = -1;
+	public int y = -1;
+	public Cell parent = this;
+	public boolean blocked = false;
+	public boolean start = false;
+	public boolean finish = false;
+	public boolean road = false;
+	public int F = 0;
+	public int G = 0;
+	public int H = 0;
+}
+
+class Table<T extends Cell> {
+	/**
+	 * Создаем карту игры с размерами width и height
+	 */
+	public Table(int width, int height) {
+		this.width = width;
+		this.height = height;
+		this.table = new Cell[width][height];
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				table[i][j] = new Cell(0, 0, false);
+			}
+		}
+	}
+
+	/**
+	 * Добавить клетку на карту
+	 */
+	public void add(Cell cell) {
+		table[cell.x][cell.y] = cell;
+	}
+
+	/**
+	 * Получить клетку по координатам x, y
+	 * 
+	 * @return клетка, либо фейковая клетка, которая всегда блокирована (чтобы
+	 *         избежать выхода за границы)
+	 */
+	@SuppressWarnings("unchecked")
+	public T get(int x, int y) {
+		if (x < width && x >= 0 && y < height && y >= 0) {
+			return (T) table[x][y];
+		}
+		// а разве так можно делать в Java? оО но работает оО
+		return (T) (new Cell(0, 0, true));
+	}
+
+	/**
+	 * Печать всех клеток поля. Красиво.
+	 */
+	public void printp() {
+		for (int i = 0; i < height; i++) {
+			for (int j = 0; j < width; j++) {
+				System.out.print(this.get(j, i));
+			}
+			System.out.println();
+			System.out.println();
+		}
+		System.out.println();
+		System.out.println();
+	}
+
+	public int width;
+	public int height;
+	private Cell[][] table;
+}
+
+class AStar {
+	private int width = 0;
+	private int height = 0;
+	public Table<Cell> cellList = null;
+
+	private Cell start = null;
+	private Cell nextCell = null;
+	private Cell finish = null;
+	private boolean noroute = false;
+
+	public void setStartCell(int x, int y) {
+		// Стартовая и конечная
+		cellList.get(x, y).setAsStart();
+		start = cellList.get(x, y);
+		start.F = 10000;
+
+	}
+
+	public void setFinishCell(int x, int y) {
+		// Стартовая и конечная
+		cellList.get(x, y).setAsFinish();
+		finish = cellList.get(x, y);
+	}
+
+	public Cell nextCell() {
+		return nextCell;
+	}
+
+	AStar(int width, int height) {
+		this.height = height;
+		this.width = width;
+		cellList = new Table<Cell>(this.width, this.height);
+
+	}
+
+	public void calculateRoute(Cell start, Cell end) {
+		boolean found = false;
+		nextCell = null;
+		noroute = false;
+		setStartCell(start.x, start.y);
+		setFinishCell(end.x, end.y); // Фух, начинаем
+
+		LinkedList<Cell> openList = new LinkedList<Cell>();
+		LinkedList<Cell> closedList = new LinkedList<Cell>();
+		LinkedList<Cell> tmpList = new LinkedList<Cell>();
+		// 1) Добавляем стартовую клетку в открытый список.
+		openList.push(start);
+
+		// 2) Повторяем следующее:
+		while (!found && !noroute) {
+			// a) Ищем в открытом списке клетку с наименьшей стоимостью F.
+			// Делаем ее текущей клеткой.
+			Cell min = openList.getFirst();
+			for (Cell cell : openList) {
+				// тут я специально тестировал, при < или <= выбираются разные
+				// пути,
+				// но суммарная стоимость G у них совершенно одинакова. Забавно,
+				// но так и должно быть.
+				if (cell.F < min.F)
+					min = cell;
+			}
+
+			// b) Помещаем ее в закрытый список. (И удаляем с открытого)
+			closedList.push(min);
+			openList.remove(min);
+			// System.out.println(openList);
+
+			// c) Для каждой из соседних 8-ми клеток ...
+			tmpList.clear();
+			tmpList.add(cellList.get(min.x, min.y - 1));
+			tmpList.add(cellList.get(min.x + 1, min.y));
+			tmpList.add(cellList.get(min.x, min.y + 1));
+			tmpList.add(cellList.get(min.x - 1, min.y));
+
+			for (Cell neightbour : tmpList) {
+				// Если клетка непроходимая или она находится в закрытом списке,
+				// игнорируем ее. В противном случае делаем следующее.
+				if (neightbour.blocked || closedList.contains(neightbour))
+					continue;
+
+				// Если клетка еще не в открытом списке, то добавляем ее туда.
+				// Делаем текущую клетку родительской для это клетки.
+				// Расчитываем стоимости F, G и H клетки.
+				if (!openList.contains(neightbour)) {
+					openList.add(neightbour);
+					neightbour.parent = min;
+					neightbour.H = neightbour.mandist(finish);
+					neightbour.G = neightbour.price(min);
+					neightbour.F = neightbour.H + neightbour.G;
+					continue;
+				}
+				// Если клетка уже в открытом списке, то проверяем, не дешевле
+				// ли будет путь через эту клетку. Для сравнения используем
+				// стоимость G.
+				if (neightbour.F < min.F // + neightbour.price(min)
+				) {
+					// Более низкая стоимость G указывает на то, что путь будет
+					// дешевле. Эсли это так, то меняем родителя клетки на
+					// текущую клетку и пересчитываем для нее стоимости G и F.
+					neightbour.parent = min.parent; // вот тут я честно хз, надо
+													// ли min.parent или нет,
+													// вроде надо
+					neightbour.H = neightbour.mandist(finish);
+					neightbour.G = neightbour.price(min);
+					neightbour.F = neightbour.H + neightbour.G;
+				}
+
+				// Если вы сортируете открытый список по стоимости F, то вам
+				// надо отсортировать свесь список в соответствии с изменениями.
+			}
+
+			// d) Останавливаемся если:
+			// Добавили целевую клетку в открытый список, в этом случае путь
+			// найден.
+			// Или открытый список пуст и мы не дошли до целевой клетки. В этом
+			// случае путь отсутствует.
+
+			if (openList.contains(finish)) {
+				found = true;
+			}
+
+			if (openList.isEmpty()) {
+				noroute = true;
+			}
+		}
+
+		// 3) Сохраняем путь. Двигаясь назад от целевой точки, проходя от каждой
+		// точки к ее родителю до тех пор, пока не дойдем до стартовой точки.
+		// Это и будет наш путь.
+		if (!noroute) {
+			Cell rd = finish.parent;
+			while (!rd.equals(start)) {
+				rd.road = true;
+				nextCell = rd;
+				rd = rd.parent;
+				if (rd == null)
+					break;
+			}
+			// cellList.printp();
+		} else {
+			System.out.println("NO ROUTE");
+		}
+
+	}
+
+	public void printRoute() {
+		cellList.printp();
+		if (!noroute) {
+
+		} else {
+			System.out.println("NO ROUTE");
+		}
+
+	}
+
+	public static void main(String[] args) {
+		// Создадим все нужные списки
+		AStar aStar = new AStar(10, 10);
+		Table<Cell> blockList = new Table<Cell>(10, 10);
+		// Создадим преграду
+		blockList.add(new Cell(3, 2, true));
+		blockList.add(new Cell(5, 2, true));
+		blockList.add(new Cell(4, 2, true));
+		blockList.add(new Cell(4, 3, true));
+		blockList.add(new Cell(4, 4, true));
+		blockList.add(new Cell(4, 5, true));
+		blockList.add(new Cell(4, 6, true));
+		blockList.add(new Cell(4, 7, true));
+		blockList.add(new Cell(3, 7, true));
+		// blockList.add(new Cell(2, 7, true));
+		blockList.add(new Cell(1, 7, true));
+		blockList.add(new Cell(0, 7, true));
+		// Заполним карту как-то клетками, учитывая преграду
+		for (int i = 0; i < aStar.width; i++) {
+			for (int j = 0; j < aStar.height; j++) {
+				aStar.cellList.add(new Cell(j, i, blockList.get(j, i).blocked));
+			}
+		}
+
+		aStar.calculateRoute(new Cell(2, 4), new Cell(7, 8));
+		aStar.printRoute();
+		System.out.println(aStar.nextCell().x + " " + aStar.nextCell().y);
+
 	}
 }
