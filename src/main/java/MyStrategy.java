@@ -168,7 +168,7 @@ public final class MyStrategy implements Strategy {
 		Trooper myEnimy=null;
 		for (int i = 0; i < trooreps.length; i++) {
 			if (!trooreps[i].isTeammate() && trooreps[i].getHitpoints() > 0) {
-		}
+		
 			if (null == myEnimy
 					|| myEnimy.getShootingRange() < trooreps[i]
 							.getShootingRange())
@@ -182,6 +182,7 @@ public final class MyStrategy implements Strategy {
 						+ trooreps[i].getY() + " dist="
 						+ self.getDistanceTo(trooreps[i]) + " heal="
 						+ trooreps[i].getHitpoints() + "%");
+			}
 		}
 		return myEnimy;
 	}
@@ -377,6 +378,7 @@ public final class MyStrategy implements Strategy {
 		Trooper needHeal = null;
 		// Player[] players = world.getPlayers();
 		moveToBonus = defineBonus(self, world);
+		myEnimy  = defineEnimy(self, world);
 		for (int i = 0; i < trooreps.length; i++) {
 
 				// if (game.getCommanderAuraRange() > self
