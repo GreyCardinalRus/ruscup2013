@@ -173,8 +173,9 @@ public final class MyStrategy implements Strategy {
 								.getShootingRange())
 					myEnimy = (null == myEnimy
 							|| trooreps[i].getType() == TrooperType.FIELD_MEDIC
-							|| self.getDistanceTo(myEnimy) > self
-									.getDistanceTo(trooreps[i]) ? trooreps[i]
+							//|| self.getDistanceTo(myEnimy) > self.getDistanceTo(trooreps[i]) 
+							|| myEnimy.getHitpoints()>trooreps[i].getHitpoints()
+									? trooreps[i]
 							: myEnimy);
 				if (isDebugEnimy)
 					System.out.println("	Enemy=" + trooreps[i].getType()
