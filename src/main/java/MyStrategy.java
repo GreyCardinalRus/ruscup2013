@@ -257,7 +257,7 @@ public final class MyStrategy implements Strategy {
 		}
 		if (!foundTeamEnime)
 			teamEnimy = null;
-		if (self == myCommander)
+		if (self.getId() == myCommander.getId())
 			myCommander = null;
 		if (isDebug || isDebugFull)
 			System.out.println(self.getType()
@@ -304,7 +304,7 @@ public final class MyStrategy implements Strategy {
 			// moveToBonus = null;
 			return;
 		}
-		if (self.getMaximalHitpoints() > self.getHitpoints()
+		if (self.getMaximalHitpoints()*0.95 > self.getHitpoints()
 				&& self.isHoldingFieldRation()
 				&& self.getActionPoints() < (self.getInitialActionPoints() - game
 						.getFieldRationBonusActionPoints())
@@ -356,7 +356,7 @@ public final class MyStrategy implements Strategy {
 			}
 		}
 		myEnimy = null;
-		if (self.getMaximalHitpoints() > self.getHitpoints()
+		if (self.getMaximalHitpoints()*0.95 > self.getHitpoints()
 				&& self.isHoldingMedikit()
 				&& self.getActionPoints() >= game.getMedikitUseCost()) {
 			move.setAction(ActionType.USE_MEDIKIT);
@@ -366,7 +366,7 @@ public final class MyStrategy implements Strategy {
 			showDebug(move, self, isDebugHeal, "");
 			return;
 		}
-		if (self.getMaximalHitpoints() > self.getHitpoints()
+		if (self.getMaximalHitpoints()*0.95 > self.getHitpoints()
 				&& self.getType() == TrooperType.FIELD_MEDIC
 				&& self.getActionPoints() >= game.getFieldMedicHealCost()) {
 			move.setX(self.getX());
@@ -385,13 +385,13 @@ public final class MyStrategy implements Strategy {
 				// .getDistanceTo(myCommander))
 				// myCommander = null;
 			if (trooreps[i].isTeammate()
-					&& trooreps[i].getMaximalHitpoints() > trooreps[i]
+					&& trooreps[i].getMaximalHitpoints()*0.95 > trooreps[i]
 							.getHitpoints()
 					&& (self.isHoldingMedikit() || self.getType() == TrooperType.FIELD_MEDIC))
 				needHeal = trooreps[i];
 
 				if (trooreps[i].isTeammate()
-					&& trooreps[i].getMaximalHitpoints() > trooreps[i]
+					&& trooreps[i].getMaximalHitpoints()*0.95 > trooreps[i]
 							.getHitpoints()
 					&& (trooreps[i].getY() == self.getY()
 							&& Math.abs(trooreps[i].getX() - self.getX()) < 2 || trooreps[i]
