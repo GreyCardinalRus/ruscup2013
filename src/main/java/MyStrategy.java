@@ -13,6 +13,8 @@ public final class MyStrategy implements Strategy {
 	static final boolean isDebugBonus = false;
 	static final boolean isDebugEnimy = true;
 	static final boolean isDebug = true;
+	
+	static final boolean CHICKEN_MODE = true;
 
 	int nextX = 0, nextY = 0;
 
@@ -38,17 +40,17 @@ public final class MyStrategy implements Strategy {
 	}
 
 	private boolean myMove(Unit target, Trooper self, World world, Move move,
-			int dist, Game game) {
+			int dist, Game game, boolean fast) {
 		if (null == target)
 			return false;
 		return myMove(target.getX(), target.getY(), self, world, move, dist,
-				game);
+				game,  fast);
 
 	}
 
 	private boolean myMove(int targetX, int targetY, Trooper self, World world,
-			Move move, int dist, Game game) {
-		if (self.getActionPoints() >= game.getStanceChangeCost()
+			Move move, int dist, Game game, boolean fast) {
+		if (fast&& self.getActionPoints() >= game.getStanceChangeCost()
 				&& (self.getStance() == TrooperStance.PRONE || self.getStance() == TrooperStance.KNEELING)) {
 			move.setAction(ActionType.RAISE_STANCE);
 			move.setX(self.getX());
@@ -419,7 +421,7 @@ public final class MyStrategy implements Strategy {
 		if (needHeal != null) {
 			// move.setAction(ActionType.MOVE);
 
-			myMove(needHeal, self, world, move, 0, game);
+			myMove(needHeal, self, world, move, 0, game, false);
 			if (move.getAction() != null)
 				return;
 
@@ -488,7 +490,7 @@ public final class MyStrategy implements Strategy {
 							&& self.getType() == TrooperType.FIELD_MEDIC)
 						return;
 
-					myMove(myEnimy, self, world, move, 5, game);
+					myMove(myEnimy, self, world, move, 5, game, false);
 
 					showDebug(move, self, isDebugEnimy,
 							" -!=Enemy " + myEnimy.getType());
@@ -505,7 +507,7 @@ public final class MyStrategy implements Strategy {
 
 				// move.setAction(ActionType.MOVE);
 
-				myMove(moveToBonus, self, world, move, 0, game);
+				myMove(moveToBonus, self, world, move, 0, game, true);
 				showDebug(move, self, isDebugBonus, " -!= moveToBonus "
 						+ moveToBonus.getType() + " (X=" + moveToBonus.getX()
 						+ " Y=" + moveToBonus.getY() + ")");
@@ -515,7 +517,7 @@ public final class MyStrategy implements Strategy {
 
 				// move.setAction(ActionType.MOVE);
 
-				myCommander = (myMove(myCommander, self, world, move, 0, game) ? myCommander
+				myCommander = (myMove(myCommander, self, world, move, 0, game,true) ? myCommander
 						: null);
 
 				showDebug(move, self, isDebugMove, " -!= myCommander ");
@@ -529,7 +531,7 @@ public final class MyStrategy implements Strategy {
 				if (myCommander != null && myCommander != self) {
 
 					move.setAction(ActionType.MOVE);
-					myMove(myCommander, self, world, move, 0, game);
+					myMove(myCommander, self, world, move, 0, game, false);
 					showDebug(move, self, isDebugMove, " -!= myCommander ");
 					if (move.getAction() != null)
 						return;
@@ -565,7 +567,7 @@ public final class MyStrategy implements Strategy {
 		if (isDebugMove)
 			System.out.println("nextX =" + nextX + " nextY =" + nextY);
 
-		myMove(nextX, nextY, self, world, move, 0, game);
+		myMove(nextX, nextY, self, world, move, 0, game, false);
 		showDebug(move, self, isDebugMove, " -!= freeStyle ");
 		if (move.getAction() != null)
 			return;
