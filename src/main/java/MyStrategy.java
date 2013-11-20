@@ -9,11 +9,11 @@ public final class MyStrategy implements Strategy {
 
 	static final boolean isDebugFull = false;
 	static final boolean isDebugMove = false;
-	static final boolean isDebugHeal = false;
+	static final boolean isDebugHeal = true;
 	static final boolean isDebugBonus = false;
 	static final boolean isDebugEnimy = true;
 	static final boolean isDebug = true;
-	
+
 	static final boolean CHICKEN_MODE = true;
 
 	int nextX = 0, nextY = 0;
@@ -44,15 +44,27 @@ public final class MyStrategy implements Strategy {
 		if (null == target)
 			return false;
 		return myMove(target.getX(), target.getY(), self, world, move, dist,
-				game,  fast);
+				game, fast);
 
 	}
 
 	private boolean myMove(int targetX, int targetY, Trooper self, World world,
 			Move move, int dist, Game game, boolean fast) {
-		if (fast&& self.getActionPoints() >= game.getStanceChangeCost()
+		if (!CHICKEN_MODE&&fast
+				&& self.getActionPoints() >= game.getStanceChangeCost()
 				&& (self.getStance() == TrooperStance.PRONE || self.getStance() == TrooperStance.KNEELING)) {
 			move.setAction(ActionType.RAISE_STANCE);
+			move.setX(self.getX());
+			move.setY(self.getY());
+			//showDebug(move, self, isDebugMove, " from myMovie ");
+			return true;
+		}
+		if (CHICKEN_MODE&&self.getType()!=TrooperType.FIELD_MEDIC
+				&& self.getActionPoints() >= game.getStanceChangeCost()
+				&& (self.getStance() == TrooperStance.STANDING
+				//||				self.getStance() == TrooperStance.KNEELING
+				)) {
+			move.setAction(ActionType.LOWER_STANCE);
 			move.setX(self.getX());
 			move.setY(self.getY());
 			showDebug(move, self, isDebugMove, " from myMovie ");
@@ -167,18 +179,26 @@ public final class MyStrategy implements Strategy {
 		Trooper myEnimy = null;
 		// приоритет -медик!
 		for (int i = 0; i < trooreps.length; i++) {
-			if (!trooreps[i].isTeammate() && trooreps[i].getHitpoints() > 0) {
+			if (!trooreps[i].isTeammate()
+					&&trooreps[i].getHitpoints() > 0
+					
+					&& ( (self.getShootingRange() > trooreps[i]
+							.getShootingRange() || self.getShootingRange() > self
+							.getDistanceTo(trooreps[i])))) {
 
-				if (null == myEnimy
-						|| trooreps[i].getType() == TrooperType.FIELD_MEDIC
-						|| myEnimy.getShootingRange() < trooreps[i]
-								.getShootingRange())
-					myEnimy = (null == myEnimy
-							|| trooreps[i].getType() == TrooperType.FIELD_MEDIC
-							//|| self.getDistanceTo(myEnimy) > self.getDistanceTo(trooreps[i]) 
-							|| myEnimy.getHitpoints()>trooreps[i].getHitpoints()
-									? trooreps[i]
-							: myEnimy);
+				// if (null == myEnimy
+				// || trooreps[i].getType() == TrooperType.FIELD_MEDIC
+				// || myEnimy.getShootingRange() > trooreps[i]
+				// .getShootingRange()
+				// )
+				myEnimy = (null == myEnimy
+				// || trooreps[i].getType() == TrooperType.FIELD_MEDIC
+						|| (self.getShootingRange() > self
+								.getDistanceTo(trooreps[i])
+								&&(self.getDistanceTo(myEnimy) > self
+								.getDistanceTo(trooreps[i])
+						|| myEnimy.getHitpoints() > trooreps[i].getHitpoints())) ? trooreps[i]
+						: myEnimy);
 				if (isDebugEnimy)
 					System.out.println("	Enemy=" + trooreps[i].getType()
 							+ " eX=" + trooreps[i].getX() + " eY="
@@ -283,13 +303,13 @@ public final class MyStrategy implements Strategy {
 					+ (myCommander != null ? " myCommander:"
 							+ myCommander.getType() + "(" + myCommander.getX()
 							+ ":" + myCommander.getY() + ")"
-							+ myCommander.getHitpoints() : "")
+							+ myCommander.getHitpoints()+" aura="+self.getDistanceTo(myCommander)+" of " +game.getCommanderAuraRange(): "")
 					+ (teamEnimy != null ? " teamEnimy:" + teamEnimy.getType()
 							+ "(" + teamEnimy.getX() + ":" + teamEnimy.getY()
 							+ ")" + teamEnimy.getHitpoints() + " "
-							+ teamEnimy.getTeammateIndex() : ""));
+							+ self.getDistanceTo(teamEnimy) : ""));
 
-		if (self.getActionPoints() < 1
+		if (self.getActionPoints() < 2
 				&& self.getType() != TrooperType.FIELD_MEDIC) {// game.getStandingMoveCost())
 																// {
 			return;
@@ -447,7 +467,7 @@ public final class MyStrategy implements Strategy {
 						" -!=Enemy " + myEnimy.getType());
 				return;
 
-			} else if (!(self.isHoldingGrenade() && 9 < self.getActionPoints())
+			} else if ((!self.isHoldingGrenade() || 9 < self.getActionPoints())
 					&& self.getShootCost() <= self.getActionPoints()
 					&& world.isVisible(self.getShootingRange(), self.getX(),
 							self.getY(), self.getStance(), myEnimy.getX(),
@@ -471,8 +491,9 @@ public final class MyStrategy implements Strategy {
 						&& self.getActionPoints() >= game.getStanceChangeCost()
 						&& self.getShootingRange() >= self
 								.getDistanceTo(myEnimy)
-						&& (self.getStance() == TrooperStance.STANDING || self
-								.getStance() == TrooperStance.KNEELING)) {
+						&& (self.getStance() == TrooperStance.STANDING 
+						//|| self.getStance() == TrooperStance.KNEELING
+								)) {
 					move.setAction(ActionType.LOWER_STANCE);
 					move.setX(self.getX());
 					move.setY(self.getY());
@@ -490,7 +511,7 @@ public final class MyStrategy implements Strategy {
 							&& self.getType() == TrooperType.FIELD_MEDIC)
 						return;
 
-					myMove(myEnimy, self, world, move, 5, game, false);
+					myMove(myEnimy, self, world, move, 0, game, false);
 
 					showDebug(move, self, isDebugEnimy,
 							" -!=Enemy " + myEnimy.getType());
@@ -511,17 +532,17 @@ public final class MyStrategy implements Strategy {
 				showDebug(move, self, isDebugBonus, " -!= moveToBonus "
 						+ moveToBonus.getType() + " (X=" + moveToBonus.getX()
 						+ " Y=" + moveToBonus.getY() + ")");
-				if (move.getAction() == ActionType.MOVE)
+				if (move.getAction() != null)
 					return;
 			} else if (myCommander != null && myCommander != self) {
 
 				// move.setAction(ActionType.MOVE);
 
-				myCommander = (myMove(myCommander, self, world, move, 0, game,true) ? myCommander
-						: null);
+				myCommander = (myMove(myCommander, self, world, move, 0, game,
+						true) ? myCommander : null);
 
 				showDebug(move, self, isDebugMove, " -!= myCommander ");
-				if (move.getAction() == ActionType.MOVE)
+				if (move.getAction() != null)
 					return;
 			}
 			// get location
