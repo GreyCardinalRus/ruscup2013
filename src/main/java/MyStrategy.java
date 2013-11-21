@@ -184,20 +184,13 @@ public final class MyStrategy implements Strategy {
 					
 					&& ( (self.getShootingRange() > trooreps[i]
 							.getShootingRange() || self.getShootingRange() > self
-							.getDistanceTo(trooreps[i])))) {
+							.getDistanceTo(trooreps[i])|| trooreps[i].getShootingRange() > self
+							.getDistanceTo(self)))) {
 
-				// if (null == myEnimy
-				// || trooreps[i].getType() == TrooperType.FIELD_MEDIC
-				// || myEnimy.getShootingRange() > trooreps[i]
-				// .getShootingRange()
-				// )
 				myEnimy = (null == myEnimy
-				// || trooreps[i].getType() == TrooperType.FIELD_MEDIC
-						|| (self.getShootingRange() > self
+						|| (self.getDistanceTo(myEnimy) > self
 								.getDistanceTo(trooreps[i])
-								&&(self.getDistanceTo(myEnimy) > self
-								.getDistanceTo(trooreps[i])
-						|| myEnimy.getHitpoints() > trooreps[i].getHitpoints())) ? trooreps[i]
+						) ? trooreps[i]
 						: myEnimy);
 				if (isDebugEnimy)
 					System.out.println("	Enemy=" + trooreps[i].getType()
