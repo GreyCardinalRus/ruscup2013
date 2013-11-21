@@ -6,6 +6,7 @@ import java.util.LinkedList;
 public final class MyStrategy implements Strategy {
 
 	Trooper teamEnimy = null;
+	Trooper myCommander = null;
 
 	static final boolean isDebugFull = false;
 	static final boolean isDebugMove = false;
@@ -50,20 +51,22 @@ public final class MyStrategy implements Strategy {
 
 	private boolean myMove(int targetX, int targetY, Trooper self, World world,
 			Move move, int dist, Game game, boolean fast) {
-		if (!CHICKEN_MODE&&fast
+		if (!CHICKEN_MODE
+				&& fast
 				&& self.getActionPoints() >= game.getStanceChangeCost()
 				&& (self.getStance() == TrooperStance.PRONE || self.getStance() == TrooperStance.KNEELING)) {
 			move.setAction(ActionType.RAISE_STANCE);
 			move.setX(self.getX());
 			move.setY(self.getY());
-			//showDebug(move, self, isDebugMove, " from myMovie ");
+			// showDebug(move, self, isDebugMove, " from myMovie ");
 			return true;
 		}
-		if (CHICKEN_MODE&&self.getType()!=TrooperType.FIELD_MEDIC
+		if (CHICKEN_MODE
+				&& self.getType() != TrooperType.FIELD_MEDIC
 				&& self.getActionPoints() >= game.getStanceChangeCost()
-				&& (self.getStance() == TrooperStance.STANDING
-				//||				self.getStance() == TrooperStance.KNEELING
-				)) {
+				&& (self.getStance() == TrooperStance.STANDING 
+				//|| self.getStance() == TrooperStance.KNEELING
+						)) {
 			move.setAction(ActionType.LOWER_STANCE);
 			move.setX(self.getX());
 			move.setY(self.getY());
@@ -180,17 +183,17 @@ public final class MyStrategy implements Strategy {
 		// приоритет -медик!
 		for (int i = 0; i < trooreps.length; i++) {
 			if (!trooreps[i].isTeammate()
-					&&trooreps[i].getHitpoints() > 0
-					
-					&& ( (self.getShootingRange() > trooreps[i]
-							.getShootingRange() || self.getShootingRange() > self
-							.getDistanceTo(trooreps[i])|| trooreps[i].getShootingRange() > self
-							.getDistanceTo(self)))) {
+					&& trooreps[i].getHitpoints() > 0
+
+					&& ((self.getShootingRange() > trooreps[i]
+							.getShootingRange()
+							|| self.getShootingRange() > self
+									.getDistanceTo(trooreps[i]) || trooreps[i]
+							.getShootingRange() > self.getDistanceTo(self)))) {
 
 				myEnimy = (null == myEnimy
 						|| (self.getDistanceTo(myEnimy) > self
-								.getDistanceTo(trooreps[i])
-						) ? trooreps[i]
+								.getDistanceTo(trooreps[i])) ? trooreps[i]
 						: myEnimy);
 				if (isDebugEnimy)
 					System.out.println("	Enemy=" + trooreps[i].getType()
@@ -263,7 +266,7 @@ public final class MyStrategy implements Strategy {
 	public void move(Trooper self, World world, Game game, Move move) {
 
 		Trooper[] trooreps = world.getTroopers();
-		Trooper myCommander = defineLeader(self, world);
+		myCommander = defineLeader(self, world);
 		boolean foundTeamEnime = false;
 
 		for (int i = 0; i < trooreps.length && teamEnimy != null; i++) {
@@ -273,8 +276,8 @@ public final class MyStrategy implements Strategy {
 		}
 		if (!foundTeamEnime)
 			teamEnimy = null;
-		if (self.getId() == myCommander.getId())
-			myCommander = null;
+		// if (self.getId() == myCommander.getId())
+		// myCommander = null;
 		if (isDebug || isDebugFull)
 			System.out.println(self.getType()
 					+ " "
@@ -296,7 +299,9 @@ public final class MyStrategy implements Strategy {
 					+ (myCommander != null ? " myCommander:"
 							+ myCommander.getType() + "(" + myCommander.getX()
 							+ ":" + myCommander.getY() + ")"
-							+ myCommander.getHitpoints()+" aura="+self.getDistanceTo(myCommander)+" of " +game.getCommanderAuraRange(): "")
+							+ myCommander.getHitpoints() + " aura="
+							+ self.getDistanceTo(myCommander) + " of "
+							+ game.getCommanderAuraRange() : "")
 					+ (teamEnimy != null ? " teamEnimy:" + teamEnimy.getType()
 							+ "(" + teamEnimy.getX() + ":" + teamEnimy.getY()
 							+ ")" + teamEnimy.getHitpoints() + " "
@@ -438,7 +443,7 @@ public final class MyStrategy implements Strategy {
 			if (move.getAction() != null)
 				return;
 
-		} else if (myEnimy != null) {
+		} else if (myEnimy != null ){
 			if (self.isHoldingFieldRation()
 					&& self.getActionPoints() >= game.getFieldRationEatCost()
 					&& self.getActionPoints() < (self.getInitialActionPoints() - game
@@ -477,7 +482,8 @@ public final class MyStrategy implements Strategy {
 								+ myEnimy.getHitpoints() + "%");
 				return;
 			} else if (!(self.getType() == TrooperType.FIELD_MEDIC
-					&& moveToBonus == null && (myCommander == self || myCommander == null))) {
+					&& moveToBonus == null && (myCommander == null || myCommander
+					.getId() == self.getId()))) {
 				// может лучше присесть?
 				if (1 < self.getActionPoints()
 						&& self.getShootCost() > self.getActionPoints()
@@ -500,9 +506,9 @@ public final class MyStrategy implements Strategy {
 
 				} else {
 
-					if (myCommander != null
+					if ((myCommander!=null ||myCommander.getId()!=self.getId())
 							&& self.getType() == TrooperType.FIELD_MEDIC)
-						return;
+					 return;
 
 					myMove(myEnimy, self, world, move, 0, game, false);
 
@@ -516,7 +522,13 @@ public final class MyStrategy implements Strategy {
 			}
 		} // else // freestyle
 		{
-
+			if (moveToBonus != null
+					&& myCommander != null
+					&& myCommander.getId() != self.getId()
+					&& myCommander.getDistanceTo(moveToBonus) > game
+							.getCommanderAuraRange()) {
+				moveToBonus = null;
+			}
 			if (moveToBonus != null) {
 
 				// move.setAction(ActionType.MOVE);
@@ -527,7 +539,8 @@ public final class MyStrategy implements Strategy {
 						+ " Y=" + moveToBonus.getY() + ")");
 				if (move.getAction() != null)
 					return;
-			} else if (myCommander != null && myCommander != self) {
+			} else if (myCommander != null
+					&& myCommander.getId() != self.getId()) {
 
 				// move.setAction(ActionType.MOVE);
 
