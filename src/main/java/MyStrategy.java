@@ -27,6 +27,13 @@ public final class MyStrategy implements Strategy {
 
 	}
 
+	private boolean havePointsForMove(Trooper self, Game game)	{
+		return (self.getActionPoints() > (self.getStance() == TrooperStance.STANDING ? game
+				.getStandingMoveCost()
+				: (self.getStance() == TrooperStance.KNEELING ? game
+						.getKneelingMoveCost() : game.getProneMoveCost())));
+		
+	}
 	private boolean cellFree(int x, int y, World world) {
 		if (x < 0 || y < 0 || x >= world.getWidth() || y >= world.getHeight())
 			return false;
@@ -74,10 +81,7 @@ public final class MyStrategy implements Strategy {
 			return true;
 		}
 
-		if (self.getActionPoints() < (self.getStance() == TrooperStance.STANDING ? game
-				.getStandingMoveCost()
-				: (self.getStance() == TrooperStance.KNEELING ? game
-						.getKneelingMoveCost() : game.getProneMoveCost()))) {
+		if (!havePointsForMove(self,game)) {
 			move.setAction(null);
 			if (isDebug)
 				System.out.println("!not move!-" + self.getActionPoints());
@@ -566,13 +570,6 @@ public final class MyStrategy implements Strategy {
 
 			}
 		}
-		// if ((move.getAction() == ActionType.MOVE && move.getX() ==
-		// self.getX() && move
-		// .getY() == self.getY())
-		// || move.getAction() == ActionType.END_TURN) {
-		// move.setAction(ActionType.MOVE);
-		// if (nextY == 0)
-		// {// init1
 		if (self.getX() < world.getWidth() / 4
 				&& self.getY() < world.getHeight() / 4) {
 			nextY = 1;
@@ -601,7 +598,9 @@ public final class MyStrategy implements Strategy {
 		// }
 		if (move.getAction() == ActionType.MOVE
 
-				&& (self.getActionPoints() < game.getStandingMoveCost()
+				&& (myCommander != null
+						&& myCommander.getId() != self.getId()
+						|| !havePointsForMove(self,game)
 						|| move.getX() < 0 || move.getY() < 0 || !cellFree(
 							move.getX(), move.getY(), world)))
 			move.setAction(null);
