@@ -84,18 +84,18 @@ public final class MyStrategy implements Strategy {
 			// showDebug(move, self, isDebugMove, " from myMovie ");
 			return true;
 		}
-		// if (chicken_mode
-		// && self.getType() != TrooperType.FIELD_MEDIC
-		// && self.getActionPoints() >= game.getStanceChangeCost()
-		// && (self.getStance() == TrooperStance.STANDING
-		// //|| self.getStance() == TrooperStance.KNEELING
-		// )) {
-		// move.setAction(ActionType.LOWER_STANCE);
-		// move.setX(self.getX());
-		// move.setY(self.getY());
-		// showDebug(move, self, isDebugMove, " from myMovie ");
-		// return true;
-		// }
+		 if (chicken_mode
+		 && self.getType() != TrooperType.FIELD_MEDIC
+		 && self.getActionPoints() >= game.getStanceChangeCost()
+		 && (self.getStance() == TrooperStance.STANDING
+		 //|| self.getStance() == TrooperStance.KNEELING
+		 )) {
+		 move.setAction(ActionType.LOWER_STANCE);
+		 move.setX(self.getX());
+		 move.setY(self.getY());
+		 showDebug(move, self, isDebugMove, " from myMovie ");
+		 return true;
+		 }
 
 		if (!havePointsForMove(self, game)) {
 			move.setAction(null);
