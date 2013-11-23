@@ -8,7 +8,7 @@ public final class MyStrategy implements Strategy {
 	Trooper teamEnimy = null;
 	Trooper myCommander = null;
 
-	static boolean isDebugFull = false;
+	static boolean isDebugFull = true;
 	static boolean isDebugMove = true;
 	static boolean isDebugHeal = false;
 	static boolean isDebugBonus = false;
@@ -74,28 +74,27 @@ public final class MyStrategy implements Strategy {
 
 	private boolean myMove(int targetX, int targetY, Trooper self, World world,
 			Move move, int dist, Game game, boolean fast) {
-		if (!chicken_mode
-				&& fast
+		if (fast
 				&& self.getActionPoints() >= game.getStanceChangeCost()
 				&& (self.getStance() == TrooperStance.PRONE || self.getStance() == TrooperStance.KNEELING)) {
 			move.setAction(ActionType.RAISE_STANCE);
 			move.setX(self.getX());
 			move.setY(self.getY());
-			// showDebug(move, self, isDebugMove, " from myMovie ");
+			showDebug(move, self, isDebugMove, " from myMovie ");
 			return true;
 		}
-		 if (chicken_mode
-		 && self.getType() != TrooperType.FIELD_MEDIC
-		 && self.getActionPoints() >= game.getStanceChangeCost()
-		 && (self.getStance() == TrooperStance.STANDING
-		 //|| self.getStance() == TrooperStance.KNEELING
-		 )) {
-		 move.setAction(ActionType.LOWER_STANCE);
-		 move.setX(self.getX());
-		 move.setY(self.getY());
-		 showDebug(move, self, isDebugMove, " from myMovie ");
-		 return true;
-		 }
+		if (chicken_mode
+				&& !fast
+				&& self.getType() != TrooperType.FIELD_MEDIC
+				&& self.getActionPoints() >= game.getStanceChangeCost()
+				&& (self.getStance() == TrooperStance.STANDING || self
+						.getStance() == TrooperStance.KNEELING)) {
+			move.setAction(ActionType.LOWER_STANCE);
+			move.setX(self.getX());
+			move.setY(self.getY());
+			showDebug(move, self, isDebugMove, " from myMovie ");
+			return true;
+		}
 
 		if (!havePointsForMove(self, game)) {
 			move.setAction(null);
@@ -372,7 +371,7 @@ public final class MyStrategy implements Strategy {
 		// ////if(isDebug) printPlayersInfo(world);
 		if (self.getActionPoints() < 2
 				&& self.getType() != TrooperType.FIELD_MEDIC) {// game.getStandingMoveCost())
-																// {
+			showDebug(move, self, isDebug, " no point!");												// {
 			return;
 		}
 		if (self.getMaximalHitpoints() * 0.95 > self.getHitpoints()
@@ -499,9 +498,10 @@ public final class MyStrategy implements Strategy {
 			myEnimy = teamEnimy;
 		if (null == teamEnimy)
 			teamEnimy = myEnimy;
-		if (needHelp != null &&needHelp.getId()!=self.getId()&& self.getDistanceTo(needHelp) > 1) {
+		if (needHelp != null && needHelp.getId() != self.getId()
+				&& self.getDistanceTo(needHelp) > 1) {
 
-			myMove(needHelp, self, world, move, 0, game, false);
+			myMove(needHelp, self, world, move, 0, game, true);
 			if (move.getAction() != null)
 				return;
 
@@ -545,26 +545,27 @@ public final class MyStrategy implements Strategy {
 						" -!=Enemy " + myEnimy.getType() + " heal="
 								+ myEnimy.getHitpoints() + "%");
 				return;
-			} else if (!(self.getType() == TrooperType.FIELD_MEDIC
-					&& self.getActionPoints() < 10
-					&& 1 > (self.getDistanceTo(myEnimy) - self
-							.getShootingRange()) && 0 < (self
-					.getDistanceTo(myEnimy) - self.getShootingRange())
-			// && moveToBonus == null && (myCommander == null || myCommander
-			// .getId() == self.getId())
-					)
-					// ) {
-					// мы в шаге от врага - может лучше присесть, а не идти под
-					// пули?
-					// if
-					&& (1 < self.getActionPoints()
-							&& self.getShootCost() > self.getActionPoints()
-							&& self.getActionPoints() >= game
-									.getStanceChangeCost()
-							&& self.getShootingRange() >= self
-									.getDistanceTo(myEnimy) && (self
-							.getStance() == TrooperStance.STANDING || self
-							.getStance() == TrooperStance.KNEELING))) {
+			} else if (self.getType() != TrooperType.FIELD_MEDIC
+			// && self.getActionPoints() < 10
+					&& chicken_mode
+					// && 1 > (self.getDistanceTo(myEnimy) - self
+					// .getShootingRange()) && 0 < (self
+					// .getDistanceTo(myEnimy) - self.getShootingRange())
+					// // && moveToBonus == null && (myCommander == null ||
+					// myCommander
+					// // .getId() == self.getId())
+					// )
+					// // ) {
+					// // мы в шаге от врага - может лучше присесть, а не идти
+					// под
+					// // пули?
+					// // if
+					// && (1 < self.getActionPoints()
+					// && self.getShootCost() > self.getActionPoints()
+					&& self.getActionPoints() >= game.getStanceChangeCost()
+			// && self.getShootingRange() >= self
+			// .getDistanceTo(myEnimy)
+			&& (self.getStance() == TrooperStance.STANDING || self.getStance() == TrooperStance.KNEELING)) {
 				move.setAction(ActionType.LOWER_STANCE);
 				move.setX(self.getX());
 				move.setY(self.getY());
@@ -578,9 +579,9 @@ public final class MyStrategy implements Strategy {
 
 			} else {
 
-				if (// (myCommander!=null ||myCommander.getId()!=self.getId())
-					// && self.getType() == TrooperType.FIELD_MEDIC
-					// ||
+				if ( (myCommander!=null ||myCommander.getId()!=self.getId())
+					 && self.getType() == TrooperType.FIELD_MEDIC
+					 ||
 				self.getDistanceTo(myEnimy) < self.getShootingRange()
 						&& !world.isVisible(self.getShootingRange(),
 								self.getX(), self.getY(), self.getStance(),
@@ -635,7 +636,7 @@ public final class MyStrategy implements Strategy {
 				if (myCommander != null && myCommander != self) {
 
 					move.setAction(ActionType.MOVE);
-					myMove(myCommander, self, world, move, 0, game, false);
+					myMove(myCommander, self, world, move, 0, game, true);
 					showDebug(move, self, isDebugMove, " -!= myCommander ");
 					if (move.getAction() != null)
 						return;
@@ -651,30 +652,30 @@ public final class MyStrategy implements Strategy {
 		// }
 		// else
 		// {
-		if (self.getX() < 7
-				&& self.getY() < 7) {
+		if (self.getX() < 7 && self.getY() < 7) {
 			nextX = world.getWidth() - 2;
 			nextY = 2;
 
-		} else if (self.getX() < 7
-				&& self.getY() > world.getHeight() -7) {
+		} else if (self.getX() < 7 && self.getY() > world.getHeight() - 7) {
 			nextY = (moveZigZag ? world.getHeight() - 2 : 2);
 			nextX = (moveZigZag ? 2 : world.getWidth() - 2);
-		} else if (self.getX() > world.getWidth() -7
-				&& self.getY() > world.getHeight() -7) {
-			nextY =  (moveZigZag ?  2 :world.getHeight() - 2);
-			nextX =  2;
-		} else if (self.getX() > world.getWidth() -7
-				&& self.getY() < 7) {
+		} else if (self.getX() > world.getWidth() - 7
+				&& self.getY() > world.getHeight() - 7) {
+			nextY = (moveZigZag ? 2 : world.getHeight() - 2);
+			nextX = 2;
+		} else if (self.getX() > world.getWidth() - 7 && self.getY() < 7) {
 			nextY = world.getHeight() - 2;
 			nextX = (moveZigZag ? 2 : world.getWidth() - 2);
 
 		}
 		// }
 		if (isDebugMove)
-			System.out.println("nextX =" + nextX + " nextY =" + nextY+" sX="+ self.getX() +" ww="+ world.getWidth()+" sY="+self.getY()+" wh=" + world.getHeight()+" moveZigZag="+moveZigZag);
+			System.out.println("nextX =" + nextX + " nextY =" + nextY + " sX="
+					+ self.getX() + " ww=" + world.getWidth() + " sY="
+					+ self.getY() + " wh=" + world.getHeight() + " moveZigZag="
+					+ moveZigZag);
 
-		myMove(nextX, nextY, self, world, move, 0, game, false);
+		myMove(nextX, nextY, self, world, move, 0, game, true);
 		showDebug(move, self, isDebugMove, " -!= freeStyle ");
 		if (move.getAction() != null)
 			return;
