@@ -9,13 +9,13 @@ public final class MyStrategy implements Strategy {
 	Trooper myCommander = null;
 
 	static boolean isDebugFull = false;
-	static boolean isDebugMove = false;
+	static boolean isDebugMove = true;
 	static boolean isDebugHeal = true;
 	static boolean isDebugBonus = false;
 	static boolean isDebugEnimy = true;
 	static boolean isDebug = true;
 
-	static boolean chicken_mode = false;
+	static boolean chicken_mode = true;
 
 	int nextX = 0, nextY = 0;
 
@@ -216,7 +216,10 @@ public final class MyStrategy implements Strategy {
 
 				myEnimy = (null == myEnimy
 						|| (self.getDistanceTo(myEnimy) > self
-								.getDistanceTo(trooreps[i])) ? trooreps[i]
+								.getDistanceTo(trooreps[i])&&world.isVisible(self.getShootingRange(),
+										self.getX(), self.getY(), self.getStance(),
+										trooreps[i].getX(), trooreps[i].getY(),
+										trooreps[i].getStance())) ? trooreps[i]
 						: myEnimy);
 				if (isDebugEnimy)
 					System.out.println("	Enemy="
@@ -247,7 +250,12 @@ public final class MyStrategy implements Strategy {
 					+ " MyShootRange=" + self.getShootingRange() + " dist="
 					+ self.getDistanceTo(myEnimy) + " ShootRange="
 					+ myEnimy.getShootingRange() + " heal="
-					+ myEnimy.getHitpoints() + "%");
+					+ myEnimy.getHitpoints() + "%"
+					+ (world.isVisible(self.getShootingRange(),
+							self.getX(), self.getY(), self.getStance(),
+							myEnimy.getX(), myEnimy.getY(),
+							myEnimy.getStance()) ? " visible"
+							: " not visible"));
 		return myEnimy;
 	}
 
@@ -634,20 +642,21 @@ public final class MyStrategy implements Strategy {
 		// {
 		if (self.getX() < world.getWidth() / 4
 				&& self.getY() < world.getHeight() / 4) {
-			nextY = 1;
-			nextX = world.getWidth() - 2;
+			nextY = world.getHeight() - 5;
+			nextX = world.getWidth() - 5;
+			
 		} else if (self.getX() < world.getWidth() / 4
 				&& self.getY() > world.getHeight() * 1 / 4) {
-			nextY = 1;
-			nextX = 1;
+			nextY = world.getHeight() - 5;
+			nextX = 5;
 		} else if (self.getX() > world.getWidth() * 1 / 4
 				&& self.getY() > world.getHeight() * 1 / 4) {
-			nextY = world.getHeight() - 2;
-			nextX = 1;
+			nextY = 5;
+			nextX = 5;
 		} else if (self.getX() > world.getWidth() * 1 / 4
 				&& self.getY() < world.getHeight() * 1 / 4) {
-			nextY = world.getHeight() - 2;
-			nextX = world.getWidth() - 2;
+			nextY = 5;
+			nextX = world.getWidth() - 5;
 		}
 		// }
 		if (isDebugMove)
