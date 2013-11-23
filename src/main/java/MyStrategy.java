@@ -10,12 +10,14 @@ public final class MyStrategy implements Strategy {
 
 	static boolean isDebugFull = false;
 	static boolean isDebugMove = true;
-	static boolean isDebugHeal = true;
+	static boolean isDebugHeal = false;
 	static boolean isDebugBonus = false;
-	static boolean isDebugEnimy = true;
+	static boolean isDebugEnimy = false;
 	static boolean isDebug = true;
 
 	static boolean chicken_mode = true;
+
+	static boolean moveZigZag = false;
 
 	int nextX = 0, nextY = 0;
 
@@ -216,10 +218,11 @@ public final class MyStrategy implements Strategy {
 
 				myEnimy = (null == myEnimy
 						|| (self.getDistanceTo(myEnimy) > self
-								.getDistanceTo(trooreps[i])&&world.isVisible(self.getShootingRange(),
-										self.getX(), self.getY(), self.getStance(),
-										trooreps[i].getX(), trooreps[i].getY(),
-										trooreps[i].getStance())) ? trooreps[i]
+								.getDistanceTo(trooreps[i]) && world.isVisible(
+								self.getShootingRange(), self.getX(),
+								self.getY(), self.getStance(),
+								trooreps[i].getX(), trooreps[i].getY(),
+								trooreps[i].getStance())) ? trooreps[i]
 						: myEnimy);
 				if (isDebugEnimy)
 					System.out.println("	Enemy="
@@ -245,16 +248,24 @@ public final class MyStrategy implements Strategy {
 			}
 		}
 		if (isDebugEnimy && myEnimy != null)
-			System.out.println("	chose Enemy=" + myEnimy.getType() + " eX="
-					+ myEnimy.getX() + " eY=" + myEnimy.getY()
-					+ " MyShootRange=" + self.getShootingRange() + " dist="
-					+ self.getDistanceTo(myEnimy) + " ShootRange="
-					+ myEnimy.getShootingRange() + " heal="
-					+ myEnimy.getHitpoints() + "%"
-					+ (world.isVisible(self.getShootingRange(),
-							self.getX(), self.getY(), self.getStance(),
-							myEnimy.getX(), myEnimy.getY(),
-							myEnimy.getStance()) ? " visible"
+			System.out.println("	chose Enemy="
+					+ myEnimy.getType()
+					+ " eX="
+					+ myEnimy.getX()
+					+ " eY="
+					+ myEnimy.getY()
+					+ " MyShootRange="
+					+ self.getShootingRange()
+					+ " dist="
+					+ self.getDistanceTo(myEnimy)
+					+ " ShootRange="
+					+ myEnimy.getShootingRange()
+					+ " heal="
+					+ myEnimy.getHitpoints()
+					+ "%"
+					+ (world.isVisible(self.getShootingRange(), self.getX(),
+							self.getY(), self.getStance(), myEnimy.getX(),
+							myEnimy.getY(), myEnimy.getStance()) ? " visible"
 							: " not visible"));
 		return myEnimy;
 	}
@@ -455,7 +466,7 @@ public final class MyStrategy implements Strategy {
 				needHelp = trooreps[i];
 
 			if (trooreps[i].isTeammate()
-					&& trooreps[i].getMaximalHitpoints() * 0.95 > trooreps[i]
+					&& trooreps[i].getMaximalHitpoints() > trooreps[i]
 							.getHitpoints()
 					&& (trooreps[i].getY() == self.getY()
 							&& Math.abs(trooreps[i].getX() - self.getX()) < 2 || trooreps[i]
@@ -488,7 +499,7 @@ public final class MyStrategy implements Strategy {
 			myEnimy = teamEnimy;
 		if (null == teamEnimy)
 			teamEnimy = myEnimy;
-		if (needHelp != null && self.getDistanceTo(needHelp) > 1) {
+		if (needHelp != null &&needHelp.getId()!=self.getId()&& self.getDistanceTo(needHelp) > 1) {
 
 			myMove(needHelp, self, world, move, 0, game, false);
 			if (move.getAction() != null)
@@ -640,27 +651,28 @@ public final class MyStrategy implements Strategy {
 		// }
 		// else
 		// {
-		if (self.getX() < world.getWidth() / 4
-				&& self.getY() < world.getHeight() / 4) {
-			nextY = world.getHeight() - 5;
-			nextX = world.getWidth() - 5;
-			
-		} else if (self.getX() < world.getWidth() / 4
-				&& self.getY() > world.getHeight() * 1 / 4) {
-			nextY = world.getHeight() - 5;
-			nextX = 5;
-		} else if (self.getX() > world.getWidth() * 1 / 4
-				&& self.getY() > world.getHeight() * 1 / 4) {
-			nextY = 5;
-			nextX = 5;
-		} else if (self.getX() > world.getWidth() * 1 / 4
-				&& self.getY() < world.getHeight() * 1 / 4) {
-			nextY = 5;
-			nextX = world.getWidth() - 5;
+		if (self.getX() < 7
+				&& self.getY() < 7) {
+			nextX = world.getWidth() - 2;
+			nextY = 2;
+
+		} else if (self.getX() < 7
+				&& self.getY() > world.getHeight() -7) {
+			nextY = (moveZigZag ? world.getHeight() - 2 : 2);
+			nextX = (moveZigZag ? 2 : world.getWidth() - 2);
+		} else if (self.getX() > world.getWidth() -7
+				&& self.getY() > world.getHeight() -7) {
+			nextY =  (moveZigZag ?  2 :world.getHeight() - 2);
+			nextX =  2;
+		} else if (self.getX() > world.getWidth() -7
+				&& self.getY() < 7) {
+			nextY = world.getHeight() - 2;
+			nextX = (moveZigZag ? 2 : world.getWidth() - 2);
+
 		}
 		// }
 		if (isDebugMove)
-			System.out.println("nextX =" + nextX + " nextY =" + nextY);
+			System.out.println("nextX =" + nextX + " nextY =" + nextY+" sX="+ self.getX() +" ww="+ world.getWidth()+" sY="+self.getY()+" wh=" + world.getHeight()+" moveZigZag="+moveZigZag);
 
 		myMove(nextX, nextY, self, world, move, 0, game, false);
 		showDebug(move, self, isDebugMove, " -!= freeStyle ");
