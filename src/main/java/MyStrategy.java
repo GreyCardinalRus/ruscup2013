@@ -8,7 +8,7 @@ public final class MyStrategy implements Strategy {
 	Trooper teamEnimy = null;
 	Trooper myCommander = null;
 
-	static boolean isDebugFull = true;
+	static boolean isDebugFull = false;
 	static boolean isDebugMove = true;
 	static boolean isDebugHeal = false;
 	static boolean isDebugBonus = false;
@@ -600,12 +600,12 @@ public final class MyStrategy implements Strategy {
 
 			// }
 		} // else // freestyle
-		{
+		//{
 			if (moveToBonus != null
-			// && myCommander != null
-			// && myCommander.getId() != self.getId()
+			 && myCommander != null
+			 && myCommander.getId() != self.getId()
 					&& myCommander.getDistanceTo(moveToBonus) > game
-							.getCommanderAuraRange()) {
+							.getCommanderAuraRange()/2) {
 				moveToBonus = null;
 			}
 			if (moveToBonus != null) {
@@ -631,19 +631,19 @@ public final class MyStrategy implements Strategy {
 			}
 			// get location
 
-			if (move.getAction() == ActionType.MOVE
-					&& move.getX() == self.getX() && move.getY() == self.getY()) {
-				if (myCommander != null && myCommander != self) {
+			//if (move.getAction() == ActionType.MOVE
+			//		&& move.getX() == self.getX() && move.getY() == self.getY()) {
+		if (myCommander != null && myCommander.getId() != self.getId()) {
 
-					move.setAction(ActionType.MOVE);
-					myMove(myCommander, self, world, move, 0, game, true);
-					showDebug(move, self, isDebugMove, " -!= myCommander ");
-					if (move.getAction() != null)
-						return;
-				} // else {// if (self.getType() == TrooperType.COMMANDER) {
+			move.setAction(ActionType.MOVE);
+			myMove(myCommander, self, world, move, 0, game, true);
+			showDebug(move, self, isDebugMove, " -!= myCommander ");
+			if (move.getAction() != null)
+				return;
+		} // else {// if (self.getType() == TrooperType.COMMANDER) {
 
-			}
-		}
+			//}
+		//}
 		// if(self.getType()==TrooperType.COMMANDER&&self.getActionPoints()>=game.getCommanderRequestEnemyDispositionCost())
 		// {
 		// move.setAction(ActionType.REQUEST_ENEMY_DISPOSITION);
