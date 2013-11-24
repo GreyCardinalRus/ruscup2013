@@ -16,6 +16,7 @@ public final class MyStrategy implements Strategy {
 	static boolean isDebug = true;
 
 	static boolean chicken_mode = true;
+	
 
 	static boolean moveZigZag = false;
 
@@ -440,7 +441,8 @@ public final class MyStrategy implements Strategy {
 			}
 
 		}
-		myEnimy = null;
+		//myEnimy = null;	
+		myEnimy = defineEnimy(self, world);
 		if (self.getMaximalHitpoints() * 0.45 > self.getHitpoints()
 				&& self.isHoldingMedikit()
 				&& self.getActionPoints() >= game.getMedikitUseCost()) {
@@ -454,6 +456,35 @@ public final class MyStrategy implements Strategy {
 		if (self.getMaximalHitpoints() * 0.95 > self.getHitpoints()
 				&& self.getType() == TrooperType.FIELD_MEDIC
 				&& self.getActionPoints() >= game.getFieldMedicHealCost()) {
+			if(myEnimy != null&&chicken_mode&&havePointsForMove(self,game)){
+				int newX=self.getX(),newY=self.getY();
+				
+				newX=self.getX()+1;newY=self.getY();
+				if(cellFree(newX, newY, world)&&!world.isVisible(myEnimy.getShootingRange(), myEnimy.getX(), myEnimy.getY(), myEnimy.getStance(), newX, newY, self.getStance())){
+					move.setX(newX);move.setY(newY);move.setAction(ActionType.MOVE);
+					showDebug(move, self, isDebugHeal, "");
+					return;					
+				}
+				newX=self.getX()-1;newY=self.getY();
+				if(cellFree(newX, newY, world)&&!world.isVisible(myEnimy.getShootingRange(), myEnimy.getX(), myEnimy.getY(), myEnimy.getStance(), newX, newY, self.getStance())){
+					move.setX(newX);move.setY(newY);move.setAction(ActionType.MOVE);
+					showDebug(move, self, isDebugHeal, "");
+					return;					
+				}
+				newX=self.getX();newY=self.getY()+1;
+				if(cellFree(newX, newY, world)&&!world.isVisible(myEnimy.getShootingRange(), myEnimy.getX(), myEnimy.getY(), myEnimy.getStance(), newX, newY, self.getStance())){
+					move.setX(newX);move.setY(newY);move.setAction(ActionType.MOVE);
+					showDebug(move, self, isDebugHeal, "");
+					return;					
+				}
+				newX=self.getX();newY=self.getY()-1;
+				if(cellFree(newX, newY, world)&&!world.isVisible(myEnimy.getShootingRange(), myEnimy.getX(), myEnimy.getY(), myEnimy.getStance(), newX, newY, self.getStance())){
+					move.setX(newX);move.setY(newY);move.setAction(ActionType.MOVE);
+					showDebug(move, self, isDebugHeal, "");
+					return;					
+				}
+				}
+				
 			move.setX(self.getX());
 			move.setY(self.getY());
 			move.setAction(ActionType.HEAL);
@@ -463,7 +494,7 @@ public final class MyStrategy implements Strategy {
 		Trooper needHelp = null;
 		// Player[] players = world.getPlayers();
 		moveToBonus = defineBonus(self, world);
-		myEnimy = defineEnimy(self, world);
+
 		for (int i = 0; i < trooreps.length; i++) {
 
 			if (trooreps[i].isTeammate()
